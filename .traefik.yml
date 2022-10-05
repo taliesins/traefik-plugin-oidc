@@ -1,0 +1,29 @@
+displayName: OIDC Plugin
+type: middleware
+iconPath: .assets/icon.png
+
+import: github.com/taliesins/traefik-plugin-oidc
+
+summary: 'Redirects to SSO if OIDC token not present or invalid. JWT tokens are verified. Supports RSA/DSA/HMAC. Support fetching keys from JWKS endpoint. '
+
+testData:
+  ClientSecret: ""           
+	PublicKey: ""               
+	Issuer: ""                  
+	Audience: ""                
+	JwksAddress: ""             
+	DiscoveryAddress: ""
+	UseDynamicValidation: ""     bool   `json:"useDynamicValidation,omitempty"`
+	SsoAddressTemplate: ""       string `json:"ssoAddressTemplate,omitempty"`
+	UrlMacClientSecret: ""       string `json:"urlMacClientSecret,omitempty"`
+	UrlMacPrivateKey: ""         string `json:"urlMacPrivateKey,omitempty"`
+	AlgorithmValidationRegex: "" string `json:"algorithmValidationRegex,omitempty"`
+	AudienceValidationRegex: ""  string `json:"audienceValidationRegex,omitempty"`
+	IssuerValidationRegex: ""    string `json:"issuerValidationRegex,omitempty"`
+	SubjectValidationRegex: ""   string `json:"subjectValidationRegex,omitempty"`
+	IgnorePathRegex: ""          string `json:"ignorePathRegex,omitempty"`
+
+
+  Headers:
+    X-Demo: test
+    X-URL: '{{URL}}'
