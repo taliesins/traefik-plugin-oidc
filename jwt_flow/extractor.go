@@ -36,6 +36,9 @@ func CookieTokenExtractor(cookieName string) TokenExtractor {
 	return func(r *http.Request) (string, error) {
 		cookie, err := r.Cookie(cookieName)
 		if err != nil {
+			if err == http.ErrNoCookie {
+				return "", nil // No error, just no JWT.
+			}
 			return "", err
 		}
 

@@ -74,11 +74,11 @@ func getJsonWebset(certificate *traefiktls.Certificate) (*jose.JSONWebKeySet, er
 
 func BuildTestJwkServer(publicKeyRootPath string, privateKeyRootPath string, oidcDiscoveryUriPath string, jwksUriPath string) (certificate *traefiktls.Certificate, jwksServer *httptest.Server, err error) {
 	if publicKeyRootPath == "" {
-		publicKeyRootPath = "signing/rsa"
+		publicKeyRootPath = "fixtures/signing/rsa"
 	}
 
 	if privateKeyRootPath == "" {
-		privateKeyRootPath = "signing/rsa"
+		privateKeyRootPath = "fixtures/signing/rsa"
 	}
 
 	certificate, err = GetCertificateFromPath(publicKeyRootPath, privateKeyRootPath)

@@ -124,7 +124,7 @@ func keyFunc(token *jwt.JSONWebToken, algorithmValidationRegex *regexp.Regexp, i
 		return publicKey, nil
 	}
 
-	if publicKey == nil && currentKeyId == "" && jwksAddress != "" {
+	if publicKey == nil && currentKeyId != "" && jwksAddress != "" {
 		publicKey, _, err := jwks.GetPublicKeyFromJwksUri(currentKeyId, jwksAddress)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get public key from jwks address %s for currentKeyId %s with error %s", jwksAddress, currentKeyId, err)
@@ -132,7 +132,7 @@ func keyFunc(token *jwt.JSONWebToken, algorithmValidationRegex *regexp.Regexp, i
 		return publicKey, nil
 	}
 
-	if publicKey == nil && currentKeyId == "" && oidcDiscoveryAddress != "" {
+	if publicKey == nil && currentKeyId != "" && oidcDiscoveryAddress != "" {
 		publicKey, _, err := jwks.GetPublicKeyFromOpenIdConnectDiscoveryUri(currentKeyId, oidcDiscoveryAddress)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get public key from discovery address %s for currentKeyId %s with error %s", oidcDiscoveryAddress, currentKeyId, err)

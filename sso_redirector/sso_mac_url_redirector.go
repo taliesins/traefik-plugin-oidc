@@ -124,28 +124,31 @@ func signMac(signingString string, key interface{}, macStrength MacStrength) (st
 	switch privateKeyType := key.(type) {
 	case *rsa.PrivateKey:
 		{
-			switch macStrength {
-			case MacStrength_256:
+			length := key.(*rsa.PrivateKey).N.BitLen() / 8
+			switch length {
+			case 256:
 				return jwtgo.SigningMethodRS256.Sign(signingString, privateKeyType)
-			case MacStrength_384:
+			case 384:
 				return jwtgo.SigningMethodRS384.Sign(signingString, privateKeyType)
-			case MacStrength_512:
+			case 512:
 				return jwtgo.SigningMethodRS512.Sign(signingString, privateKeyType)
 			default:
-				return "", fmt.Errorf("unsupported mac strength %T", macStrength)
+				return "", fmt.Errorf("unsupported signing method strength %T", length)
 			}
 		}
 	case *ecdsa.PrivateKey:
 		{
-			switch macStrength {
-			case MacStrength_256:
+			length := key.(*ecdsa.PrivateKey).Curve.Params().BitSize
+
+			switch length {
+			case 256:
 				return jwtgo.SigningMethodES256.Sign(signingString, privateKeyType)
-			case MacStrength_384:
+			case 384:
 				return jwtgo.SigningMethodES384.Sign(signingString, privateKeyType)
-			case MacStrength_512:
+			case 521:
 				return jwtgo.SigningMethodES512.Sign(signingString, privateKeyType)
 			default:
-				return "", fmt.Errorf("unsupported mac strength %T", macStrength)
+				return "", fmt.Errorf("unsupported signing method strength %T", length)
 			}
 		}
 	case []byte:
@@ -170,54 +173,60 @@ func verifyMac(signingString string, signature string, key interface{}, macStren
 	switch publicKeyType := key.(type) {
 	case *rsa.PrivateKey:
 		{
-			switch macStrength {
-			case MacStrength_256:
+			length := key.(*rsa.PrivateKey).N.BitLen() / 8
+			switch length {
+			case 256:
 				return jwtgo.SigningMethodRS256.Verify(signingString, signature, &publicKeyType.PublicKey)
-			case MacStrength_384:
+			case 384:
 				return jwtgo.SigningMethodRS384.Verify(signingString, signature, &publicKeyType.PublicKey)
-			case MacStrength_512:
+			case 512:
 				return jwtgo.SigningMethodRS512.Verify(signingString, signature, &publicKeyType.PublicKey)
 			default:
-				return fmt.Errorf("unsupported mac strength %T", macStrength)
+				return fmt.Errorf("unsupported signing method strength %T", length)
 			}
 		}
 	case *ecdsa.PrivateKey:
 		{
-			switch macStrength {
-			case MacStrength_256:
+			length := key.(*ecdsa.PrivateKey).Curve.Params().BitSize
+
+			switch length {
+			case 256:
 				return jwtgo.SigningMethodES256.Verify(signingString, signature, &publicKeyType.PublicKey)
-			case MacStrength_384:
+			case 384:
 				return jwtgo.SigningMethodES384.Verify(signingString, signature, &publicKeyType.PublicKey)
-			case MacStrength_512:
+			case 521:
 				return jwtgo.SigningMethodES512.Verify(signingString, signature, &publicKeyType.PublicKey)
 			default:
-				return fmt.Errorf("unsupported mac strength %T", macStrength)
+				return fmt.Errorf("unsupported signing method strength %T", length)
 			}
 		}
 	case *rsa.PublicKey:
 		{
-			switch macStrength {
-			case MacStrength_256:
+			length := key.(*rsa.PublicKey).N.BitLen() / 8
+			switch length {
+			case 256:
 				return jwtgo.SigningMethodRS256.Verify(signingString, signature, publicKeyType)
-			case MacStrength_384:
+			case 384:
 				return jwtgo.SigningMethodRS384.Verify(signingString, signature, publicKeyType)
-			case MacStrength_512:
+			case 512:
 				return jwtgo.SigningMethodRS512.Verify(signingString, signature, publicKeyType)
 			default:
-				return fmt.Errorf("unsupported mac strength %T", macStrength)
+				return fmt.Errorf("unsupported signing method strength %T", length)
 			}
 		}
 	case *ecdsa.PublicKey:
 		{
-			switch macStrength {
-			case MacStrength_256:
+			length := key.(*ecdsa.PublicKey).Curve.Params().BitSize
+
+			switch length {
+			case 256:
 				return jwtgo.SigningMethodES256.Verify(signingString, signature, publicKeyType)
-			case MacStrength_384:
+			case 384:
 				return jwtgo.SigningMethodES384.Verify(signingString, signature, publicKeyType)
-			case MacStrength_512:
+			case 521:
 				return jwtgo.SigningMethodES512.Verify(signingString, signature, publicKeyType)
 			default:
-				return fmt.Errorf("unsupported mac strength %T", macStrength)
+				return fmt.Errorf("unsupported signing method strength %T", length)
 			}
 		}
 	case []byte:

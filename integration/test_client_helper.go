@@ -132,7 +132,7 @@ func RunTestAuthenticationWithConfigurationSuccess(t *testing.T, signingMethod j
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 
@@ -155,7 +155,7 @@ func RunTestAuthenticationWithConfigurationFailure(t *testing.T, signingMethod j
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 	tokenInjector(req, signedToken)
@@ -238,7 +238,7 @@ func RunTestWithPublicKeySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) {})
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 	tokenInjector(req, signedToken)
@@ -271,7 +271,7 @@ func RunTestWithPublicKeyFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) {})
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 	tokenInjector(req, signedToken)
@@ -307,7 +307,7 @@ func RunTestWithDiscoverySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 
@@ -348,7 +348,7 @@ func RunTestWithDiscoveryFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 		panic(err)
 	}
 
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(clientCertificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(clientCertificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 	if err != nil {
 		panic(err)
 	}

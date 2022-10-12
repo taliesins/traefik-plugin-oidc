@@ -5,23 +5,45 @@ import (
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	jwtgo "github.com/golang-jwt/jwt/v4"
 	"reflect"
 )
 
-func GetPrivateKey(privateKeyData []byte) (interface{}, error) {
-	privateKey, errParsePKCS8PrivateKey := x509.ParsePKCS8PrivateKey(privateKeyData)
+func GetPrivateKey(privateKeyData []byte) (privateKey interface{}, err error) {
+	privateKeyBlockBytes := privateKeyData
+
+	privateKeyBlock, rest := pem.Decode(privateKeyData)
+	if !(privateKeyBlock == nil || len(rest) > 0) {
+		switch privateKeyBlock.Type {
+		case "PRIVATE KEY":
+			privateKeyBlockBytes = privateKeyBlock.Bytes
+		case "RSA PRIVATE KEY":
+			privateKeyBlockBytes = privateKeyBlock.Bytes
+		case "EC PRIVATE KEY":
+			privateKeyBlockBytes = privateKeyBlock.Bytes
+		default:
+			return nil, fmt.Errorf("Unsupported private key type %q", privateKeyBlock.Type)
+		}
+	} else {
+		privateKeyBlockBytes, err = x509.MarshalPKCS8PrivateKey(privateKeyData)
+		if err != nil {
+			privateKeyBlockBytes = privateKeyData
+		}
+	}
+
+	privateKey, errParsePKCS8PrivateKey := x509.ParsePKCS8PrivateKey(privateKeyBlockBytes)
 	if errParsePKCS8PrivateKey == nil {
 		return privateKey, nil
 	}
 
-	privateKey, errParsePKCS1PrivateKey := x509.ParsePKCS1PrivateKey(privateKeyData)
+	privateKey, errParsePKCS1PrivateKey := x509.ParsePKCS1PrivateKey(privateKeyBlockBytes)
 	if errParsePKCS1PrivateKey == nil {
 		return privateKey, nil
 	}
 
-	privateKey, errParseECPrivateKey := x509.ParseECPrivateKey(privateKeyData)
+	privateKey, errParseECPrivateKey := x509.ParseECPrivateKey(privateKeyBlockBytes)
 	if errParseECPrivateKey == nil {
 		return privateKey, nil
 	}
@@ -29,18 +51,40 @@ func GetPrivateKey(privateKeyData []byte) (interface{}, error) {
 	return nil, errParsePKCS8PrivateKey
 }
 
-func GetPublicKey(publicKeyData []byte) (interface{}, error) {
-	publicKey, errParsePKIXPublicKey := x509.ParsePKIXPublicKey(publicKeyData)
+func GetPublicKey(publicKeyData []byte) (publicKey interface{}, err error) {
+	publicKeyBlockBytes := publicKeyData
+	publicKeyBlock, rest := pem.Decode(publicKeyData)
+	if !(publicKeyBlock == nil || len(rest) > 0) {
+		switch publicKeyBlock.Type {
+		case "CERTIFICATE":
+			{
+				publicKeyBlockBytes = publicKeyBlock.Bytes
+			}
+		case "PUBLIC KEY":
+			{
+				publicKeyBlockBytes = publicKeyBlock.Bytes
+			}
+		default:
+			return nil, fmt.Errorf("Unsupported private key type %q", publicKeyBlock.Type)
+		}
+	} else {
+		publicKeyBlockBytes, err = x509.MarshalPKIXPublicKey(publicKeyData)
+		if err != nil {
+			publicKeyBlockBytes = publicKeyData
+		}
+	}
+
+	publicKey, errParsePKIXPublicKey := x509.ParsePKIXPublicKey(publicKeyBlockBytes)
 	if errParsePKIXPublicKey == nil {
 		return publicKey, nil
 	}
 
-	publicKey, errParsePKCS1PublicKey := x509.ParsePKCS1PublicKey(publicKeyData)
+	publicKey, errParsePKCS1PublicKey := x509.ParsePKCS1PublicKey(publicKeyBlockBytes)
 	if errParsePKCS1PublicKey == nil {
 		return publicKey, nil
 	}
 
-	cert, err := x509.ParseCertificate(publicKeyData)
+	cert, err := x509.ParseCertificate(publicKeyBlockBytes)
 	if err == nil {
 		return cert.PublicKey, nil
 	}

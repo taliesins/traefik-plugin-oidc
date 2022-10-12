@@ -135,7 +135,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.UrlMacPrivateKey != "" {
 		urlHashPrivateKey, _, err = jwks.GetPrivateKeyFromFileOrContent(config.UrlMacPrivateKey)
 		if err != nil {
-			log.Errorf("Unable to parse config UrlMacPrivateKey: %s", err)
+			log.WithoutContext().Errorf("Unable to parse config UrlMacPrivateKey: %s", err)
 			return nil, err
 		}
 	} else {
