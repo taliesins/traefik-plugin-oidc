@@ -190,19 +190,33 @@ func RenderSsoCallbackPageTemplate(redirectorUrl *url.URL) (string, error) {
 
 func TemplateToRegexFixer(template string) string {
 	replacer := strings.NewReplacer(
-		"\\", "\\\\",
+		`\`, `\\`,
 		//".", "\\.", // will break {{.Url}}
 		//"{", "\\{", // will break {{.Url}}
-		"/", "\\/",
-		"^", "\\^",
-		"$", "\\$",
-		"*", "\\*",
-		"+", "\\+",
-		"?", "\\?",
-		"(", "\\(",
-		")", "\\)",
-		"[", "\\[",
-		"|", "\\|",
+		"/", `\/`,
+		"^", `\^`,
+		"$", `\$`,
+		"*", `\*`,
+		"+", `\+`,
+		"?", `\?`,
+		"(", `\(`,
+		")", `\)`,
+		"[", `\[`,
+		"|", `\|`,
+	)
+
+	return replacer.Replace(template)
+}
+
+func JSUnescapeString(template string) string {
+	replacer := strings.NewReplacer(
+		`\u003D`, `=`,
+		`\u0026`, `&`,
+		`\u003E`, `>`,
+		`\u003C`, `<`,
+		`\"`, `"`,
+		`\'`, "'",
+		`\\`, `\`,
 	)
 
 	return replacer.Replace(template)

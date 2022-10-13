@@ -36,7 +36,7 @@ func OidcErrorHandler(
 		}
 
 		nonce := guuid.NewString()
-		issuedAt := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
+		issuedAt := strconv.FormatInt(time.Now().UTC().Unix(), 10)
 
 		var redirectorUrl *url.URL
 		if key != nil {

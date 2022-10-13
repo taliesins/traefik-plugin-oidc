@@ -12,8 +12,10 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
+	htmlTemplate "text/template"
 	"time"
 )
 
@@ -129,15 +131,15 @@ func TestWithRsaPublicKeySignedWithWrongPrivateKeyFailure(t *testing.T) {
 // ***************** Signing using Oidc to get signing method Tests
 
 func TestWithOidcInAuthorizationHeaderSuccess(t *testing.T) {
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES256, "fixtures/signing/es256", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES384, "fixtures/signing/es384", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES512, "fixtures/signing/es512", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS256, "fixtures/signing/rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS384, "fixtures/signing/rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS512, "fixtures/signing/rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS384, "fixtures/signing/rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS512, "fixtures/signing/rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES256, "fixtures/signing/es256", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES384, "fixtures/signing/es384", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES512, "fixtures/signing/es512", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS256, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS384, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS512, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS384, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS512, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithOidcInAuthorizationHeaderFailure(t *testing.T) {
@@ -153,7 +155,7 @@ func TestWithOidcInAuthorizationHeaderFailure(t *testing.T) {
 }
 
 func TestWithRS256UsingJwksUriSuccess(t *testing.T) {
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", true, false, true, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithRS256UsingOpenIdConnectDiscoveryUriSuccess(t *testing.T) {
@@ -193,6 +195,9 @@ func TestWithNoAuthenticationAndNoSsoProvidedFailure(t *testing.T) {
 	assert.EqualValues(t, expectedBody, string(body), "they should be equal")
 }
 
+//nonce specified by client
+//nonce not specified by client
+
 func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 	var expectedSsoAddressTemplate string
 
@@ -212,7 +217,7 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 	defer pluginServer.Close()
 
 	//client, nonce, issuedAt, signedToken, expectedRedirectorUrl, err
-	client, nonce, _, _, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, jwtgo.SigningMethodRS256, "", nil, nil, nil)
+	client, _, _, _, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, jwtgo.SigningMethodRS256, "", nil, nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -237,7 +242,7 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 	assert.Len(t, expectedBodyMatches, 4, "Expect 4 matches")
 	bodyMatch := expectedBodyMatches[1]
 
-	redirectUrlRegex := strings.Replace(strings.Replace(strings.Replace(sso_redirector.TemplateToRegexFixer(expectedSsoAddressTemplate), "{{.CallbackUrl}}", "(.*)", -1), "{{.State}}", "(.*)", -1), "{{.Nonce}}", "(.*)", -1)
+	redirectUrlRegex := strings.Replace(strings.Replace(strings.Replace(sso_redirector.TemplateToRegexFixer(htmlTemplate.JSEscapeString(expectedSsoAddressTemplate)), "{{.CallbackUrl}}", "(.*)", -1), "{{.State}}", "(.*)", -1), "{{.Nonce}}", "(.*)", -1)
 	expectedRedirectUrlRegex, err := regexp.Compile(redirectUrlRegex)
 	expectedRedirectUrlMatches := expectedRedirectUrlRegex.FindStringSubmatch(bodyMatch)
 	assert.Len(t, expectedRedirectUrlMatches, 4, "Expect 4 matches")
@@ -245,9 +250,38 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 	redirectUriMatch := expectedRedirectUrlMatches[2]
 	stateMatch := expectedRedirectUrlMatches[3]
 
-	assert.Equal(t, nonce, nonceMatch, "nonce should be specified")
+	stateMatchQuerystringString, err := url.QueryUnescape(stateMatch)
+	if err != nil {
+		panic(err)
+	}
+
+	stateMatchQuerystring, err := url.ParseQuery(stateMatchQuerystringString)
+	if err != nil {
+		panic(err)
+	}
+
+	hash := stateMatchQuerystring.Get("hash")
+	iatUnixEpochSeconds, err := strconv.ParseInt(stateMatchQuerystring.Get("iat"), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	iat := time.Unix(iatUnixEpochSeconds, 0)
+	allowedClockSkew := time.Second * 5
+	nonce := stateMatchQuerystring.Get("nonce")
+	redirectUri, err := url.Parse(stateMatchQuerystring.Get("redirect_uri"))
+	if err != nil {
+		panic(err)
+	}
+
+	assert.NotEmpty(t, nonceMatch, "nonce should be specified by the server")
 	assert.EqualValues(t, url.QueryEscape(expectedRedirectUri.String()), redirectUriMatch, "redirect_uri should be specified")
 	assert.NotEqual(t, url.QueryEscape(""), stateMatch, "state should be specified")
+	assert.NotEqual(t, url.QueryEscape(""), hash, "hash should be specified")
+	assert.True(t, time.Now().Before(iat.Add(allowedClockSkew)), "iat is larger then expected")
+	assert.True(t, time.Now().After(iat.Add(-1*(allowedClockSkew))), "iat is smaller then expected")
+	assert.EqualValues(t, nonceMatch, nonce, "nonce should match")
+	assert.NotEqual(t, url.QueryEscape(""), redirectUri, "redirectUri should be specified")
 }
 
 func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {

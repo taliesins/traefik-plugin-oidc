@@ -103,8 +103,6 @@ func BuildTestClient(certificate *traefiktls.Certificate, clientSecret string, j
 	token := jwtgo.NewWithClaims(tokenSigningMethod, claims)
 	if overrideToken != nil {
 		overrideToken(token)
-	} else {
-		token.Header["kid"] = "0"
 	}
 
 	signedToken, err = token.SignedString(privateKey)
