@@ -7,6 +7,8 @@ import (
 	jwtgo "github.com/golang-jwt/jwt/v4"
 	"net/http"
 	"net/url"
+	"strconv"
+	"time"
 )
 
 var CallbackPath = "/oauth2/callback"
@@ -92,7 +94,7 @@ func GetRedirectorUrl(r *http.Request, key interface{}, macStrength MacStrength,
 	return clonedUrl, nil
 }
 
-func GetRedirectUrl(r *http.Request, key interface{}, macStrength MacStrength) (*url.URL, error) {
+func GetRedirectUrl(r *http.Request, key interface{}, macStrength MacStrength, allowedClockSkew time.Duration) (*url.URL, error) {
 	clonedUrl := CloneUrl(r)
 
 	err := VerifyAndStripMacHashFromUrl(clonedUrl, key, macStrength)
@@ -102,9 +104,14 @@ func GetRedirectUrl(r *http.Request, key interface{}, macStrength MacStrength) (
 
 	query := r.URL.Query()
 
-	redirectUriString := query.Get(RedirectUriQuerystringParameterName)
-	if redirectUriString == "" {
+	redirectUriQueryStringParameterValue := query.Get(RedirectUriQuerystringParameterName)
+	if redirectUriQueryStringParameterValue == "" {
 		return nil, fmt.Errorf("No %s querystring in uri", RedirectUriQuerystringParameterName)
+	}
+
+	redirectUri, err := url.Parse(redirectUriQueryStringParameterValue)
+	if err != nil {
+		return nil, fmt.Errorf("%s is not a valid uri", redirectUri)
 	}
 
 	nonce := query.Get(NonceQuerystringParameterName)
@@ -112,12 +119,30 @@ func GetRedirectUrl(r *http.Request, key interface{}, macStrength MacStrength) (
 		return nil, fmt.Errorf("No %s querystring in uri", NonceQuerystringParameterName)
 	}
 
-	issuedAt := query.Get(IssuedAtQuerystringParameterName)
-	if issuedAt == "" {
+	issuedAtQueryStringParameterValue := query.Get(IssuedAtQuerystringParameterName)
+	if issuedAtQueryStringParameterValue == "" {
 		return nil, fmt.Errorf("No %s querystring in uri", IssuedAtQuerystringParameterName)
 	}
 
-	return url.Parse(redirectUriString)
+	issuedAtUnixEpochSeconds, err := strconv.ParseInt(issuedAtQueryStringParameterValue, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to convert iat %s into unix epoch seconds", issuedAtUnixEpochSeconds)
+	}
+
+	iat := time.Unix(issuedAtUnixEpochSeconds, 0)
+	now := time.Now().UTC()
+	startWindow := iat.Add(-1 * allowedClockSkew)
+	endWindow := iat.Add(allowedClockSkew)
+
+	if endWindow.Before(now) {
+		return nil, fmt.Errorf("Iat has passed the valididty window")
+	}
+
+	if now.Before(startWindow) {
+		return nil, fmt.Errorf("Iat has not begun the valididty window")
+	}
+
+	return redirectUri, nil
 }
 
 func signMac(signingString string, key interface{}, macStrength MacStrength) (string, error) {

@@ -47,6 +47,17 @@ func WithErrorHandler(h ErrorHandler) Option {
 	}
 }
 
+// WithSuccessHandler sets the handler which is called
+// when we encounter errors in the JWTMiddleware.
+// See the SuccessHandler type for more information.
+//
+// Default value: DefaultSuccessHandler.
+func WithSuccessHandler(h SuccessHandler) Option {
+	return func(m *JWTMiddleware) {
+		m.successHandler = h
+	}
+}
+
 // WithTokenExtractor sets up the function which extracts
 // the JWT to be validated from the request.
 //

@@ -51,7 +51,7 @@ func BuildTestClient(certificate *traefiktls.Certificate, clientSecret string, j
 	}
 
 	nonce = guuid.NewString()
-	issuedAt = strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
+	issuedAt = strconv.FormatInt(time.Now().UTC().Unix(), 10)
 
 	//Work out the url that the SSO would redirect back to
 	expectedRedirectorUrl, err = url.Parse(fmt.Sprintf("%s://%s%s?iat=%s&nonce=%s&redirect_uri=%s", clientRequestUrl.Scheme, clientRequestUrl.Host, sso_redirector.RedirectorPath, issuedAt, nonce, url.QueryEscape(clientRequestUrl.String())))

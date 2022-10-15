@@ -15,6 +15,7 @@ type ContextKey struct{}
 type JWTMiddleware struct {
 	validateToken       ValidateToken
 	errorHandler        ErrorHandler
+	successHandler      SuccessHandler
 	tokenExtractor      TokenExtractor
 	credentialsOptional bool
 	validateOnOptions   bool
@@ -35,6 +36,7 @@ func New(validateToken ValidateToken, opts ...Option) *JWTMiddleware {
 	m := &JWTMiddleware{
 		validateToken:       validateToken,
 		errorHandler:        DefaultErrorHandler,
+		successHandler:      DefaultSuccessHandler,
 		credentialsOptional: false,
 		tokenExtractor:      AuthHeaderTokenExtractor,
 		validateOnOptions:   true,
@@ -55,12 +57,12 @@ func (m *JWTMiddleware) CheckJWT(next http.Handler) http.Handler {
 		// If we don't validate on OPTIONS and this is OPTIONS
 		// then continue onto next without validating.
 		if !m.validateOnOptions && r.Method == http.MethodOptions {
-			next.ServeHTTP(w, r)
+			m.successHandler(next, w, r, "")
 			return
 		}
 
 		if m.ignorePathRegex != nil && m.ignorePathRegex.MatchString(r.URL.Path) {
-			next.ServeHTTP(w, r)
+			m.successHandler(next, w, r, "")
 			return
 		}
 
@@ -76,7 +78,7 @@ func (m *JWTMiddleware) CheckJWT(next http.Handler) http.Handler {
 			// If credentials are optional continue
 			// onto next without validating.
 			if m.credentialsOptional {
-				next.ServeHTTP(w, r)
+				m.successHandler(next, w, r, "")
 				return
 			}
 
@@ -95,6 +97,7 @@ func (m *JWTMiddleware) CheckJWT(next http.Handler) http.Handler {
 		// No err means we have a valid token, so set
 		// it into the context and continue onto next.
 		r = r.Clone(context.WithValue(r.Context(), ContextKey{}, validToken))
-		next.ServeHTTP(w, r)
+		m.successHandler(next, w, r, token)
+		return
 	})
 }

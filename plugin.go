@@ -222,6 +222,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	macStrength := sso_redirector.MacStrength_256
 
 	errorHandler := jwt_flow.OidcErrorHandler(ssoRedirectUrlTemplate, key, macStrength)
+	oidcSuccessHandler := jwt_flow.OidcSuccessHandler(key, macStrength, config.AllowedClockSkew)
 	tokenExtractor := jwt_flow.OidcTokenExtractor()
 	tokenValidator := validator.OidcTokenValidator(
 		algorithmValidationRegex,
@@ -244,6 +245,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		jwt_flow.WithIgnorePathOptions(ignorePathRegex),
 		jwt_flow.WithTokenExtractor(tokenExtractor),
 		jwt_flow.WithErrorHandler(errorHandler),
+		jwt_flow.WithSuccessHandler(oidcSuccessHandler),
 	)
 
 	oidcHandler := oidcMiddleware.CheckJWT(next)
