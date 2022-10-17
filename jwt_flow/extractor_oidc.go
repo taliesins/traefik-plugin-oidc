@@ -1,6 +1,8 @@
 package jwt_flow
 
-import "github.com/taliesins/traefik-plugin-oidc/sso_redirector"
+import (
+	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
+)
 
 // OidcTokenExtractor is the default token extractor implementation for the
 // JWTMiddleware. If an token extractor is not provided via the WithTokenExtractor

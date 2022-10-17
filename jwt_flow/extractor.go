@@ -1,6 +1,7 @@
 package jwt_flow
 
 import (
+	"go.uber.org/zap"
 	"net/http"
 	"strings"
 
@@ -12,11 +13,11 @@ import (
 // to specify a token was found, but the information was somehow incorrectly
 // formed. In the case where a token is simply not present, this should not
 // be treated as an error. An empty string should be returned in that case.
-type TokenExtractor func(r *http.Request) (string, error)
+type TokenExtractor func(logger *zap.Logger, r *http.Request) (string, error)
 
 // AuthHeaderTokenExtractor is a TokenExtractor that takes a request
 // and extracts the token from the Authorization header.
-func AuthHeaderTokenExtractor(r *http.Request) (string, error) {
+func AuthHeaderTokenExtractor(logger *zap.Logger, r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return "", nil // No error, just no JWT.
@@ -27,13 +28,19 @@ func AuthHeaderTokenExtractor(r *http.Request) (string, error) {
 		return "", errors.New("Authorization header format must be Bearer {token}")
 	}
 
-	return authHeaderParts[1], nil
+	token := authHeaderParts[1]
+	if token != "" {
+		logger.Debug("Token extracted from auth header", zap.String("requestUrlPath", r.URL.Path))
+		return token, nil
+	}
+	
+	return "", nil // No error, just no JWT.
 }
 
 // CookieTokenExtractor builds a TokenExtractor that takes a request and
 // extracts the token from the cookie using the passed in cookieName.
 func CookieTokenExtractor(cookieName string) TokenExtractor {
-	return func(r *http.Request) (string, error) {
+	return func(logger *zap.Logger, r *http.Request) (string, error) {
 		cookie, err := r.Cookie(cookieName)
 		if err != nil {
 			if err == http.ErrNoCookie {
@@ -43,7 +50,11 @@ func CookieTokenExtractor(cookieName string) TokenExtractor {
 		}
 
 		if cookie != nil {
-			return cookie.Value, nil
+			token := cookie.Value
+			if token != "" {
+				logger.Debug("Token extracted from cookie", zap.String("requestUrlPath", r.URL.Path))
+				return token, nil
+			}
 		}
 
 		return "", nil // No error, just no JWT.
@@ -53,12 +64,13 @@ func CookieTokenExtractor(cookieName string) TokenExtractor {
 // FormTokenExtractor returns a TokenExtractor that extracts
 // the token from a form post.
 func FormTokenExtractor(urlPathPrefix string, param string) TokenExtractor {
-	return func(r *http.Request) (string, error) {
+	return func(logger *zap.Logger, r *http.Request) (string, error) {
 		if r.Method == "POST" && strings.HasPrefix(r.URL.Path, urlPathPrefix) {
 			err := r.ParseForm()
 			if err == nil {
 				token := r.Form.Get(param)
 				if token != "" {
+					logger.Debug("Token extracted from form", zap.String("requestUrlPath", r.URL.Path))
 					return token, nil
 				}
 			}
@@ -71,8 +83,14 @@ func FormTokenExtractor(urlPathPrefix string, param string) TokenExtractor {
 // ParameterTokenExtractor returns a TokenExtractor that extracts
 // the token from the specified query string parameter.
 func ParameterTokenExtractor(param string) TokenExtractor {
-	return func(r *http.Request) (string, error) {
-		return r.URL.Query().Get(param), nil
+	return func(logger *zap.Logger, r *http.Request) (string, error) {
+		token := r.URL.Query().Get(param)
+		if token != "" {
+			logger.Debug("Token extracted from form", zap.String("requestUrlPath", r.URL.Path))
+			return token, nil
+		}
+
+		return "", nil // No error, just no JWT.
 	}
 }
 
@@ -80,9 +98,9 @@ func ParameterTokenExtractor(param string) TokenExtractor {
 // and takes the one that does not return an empty token. If a TokenExtractor
 // returns an error that error is immediately returned.
 func MultiTokenExtractor(extractors ...TokenExtractor) TokenExtractor {
-	return func(r *http.Request) (string, error) {
+	return func(logger *zap.Logger, r *http.Request) (string, error) {
 		for _, ex := range extractors {
-			token, err := ex(r)
+			token, err := ex(logger, r)
 			if err != nil {
 				return "", err
 			}

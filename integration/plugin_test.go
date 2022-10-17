@@ -203,10 +203,10 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
-		pluginConfig.SsoAddressTemplate = ssoAddressTemplate
-		pluginConfig.UrlMacPrivateKey = certificate.KeyFile.String()
+		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
-		expectedSsoAddressTemplate = pluginConfig.SsoAddressTemplate
+		expectedSsoAddressTemplate = pluginConfig.SsoRedirectUrlAddressTemplate
 
 		return pluginConfig
 	})
@@ -287,8 +287,8 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
-		pluginConfig.SsoAddressTemplate = ssoAddressTemplate
-		pluginConfig.UrlMacPrivateKey = certificate.KeyFile.String()
+		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
 		return pluginConfig
 	})
@@ -326,8 +326,8 @@ func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {
 func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
-		pluginConfig.SsoAddressTemplate = ssoAddressTemplate
-		pluginConfig.UrlMacPrivateKey = certificate.KeyFile.String()
+		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
 		return pluginConfig
 	})
@@ -368,8 +368,8 @@ func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
 func TestRedirectorWithInvalidCookieAndValidHashSuccess(t *testing.T) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
-		pluginConfig.SsoAddressTemplate = ssoAddressTemplate
-		pluginConfig.UrlMacPrivateKey = certificate.KeyFile.String()
+		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
 		return pluginConfig
 	})
@@ -414,8 +414,8 @@ func TestRedirectorWithInvalidCookieAndValidHashSuccess(t *testing.T) {
 func TestRedirectorWithValidCookieAndValidHashAndUsingDiscoveryAddressSuccess(t *testing.T) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.OidcDiscoveryAddress = oidcDiscoveryUri.String()
-		pluginConfig.SsoAddressTemplate = ssoAddressTemplate
-		pluginConfig.UrlMacPrivateKey = certificate.KeyFile.String()
+		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
 		return pluginConfig
 	})
@@ -456,8 +456,8 @@ func TestRedirectorWithValidCookieAndValidHashAndUsingDiscoveryAddressSuccess(t 
 func TestRedirectorWithValidPostAndValidHashSuccess(t *testing.T) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
-		pluginConfig.SsoAddressTemplate = ssoAddressTemplate
-		pluginConfig.UrlMacPrivateKey = certificate.KeyFile.String()
+		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
 		return pluginConfig
 	})
@@ -499,11 +499,11 @@ func TestWithNoAuthenticationAndIgnorePathMatched(t *testing.T) {
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
-		pluginConfig.SsoAddressTemplate = ssoAddressTemplate
-		pluginConfig.UrlMacPrivateKey = certificate.KeyFile.String()
+		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 		pluginConfig.IgnorePathRegex = "/"
 
-		//expectedSsoAddressTemplate = pluginConfig.SsoAddressTemplate
+		//expectedSsoAddressTemplate = pluginConfig.SsoRedirectUrlAddressTemplate
 
 		return pluginConfig
 	})
@@ -536,11 +536,11 @@ func TestWithNoAuthenticationAndIgnorePathNotMatched(t *testing.T) {
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
-		pluginConfig.SsoAddressTemplate = ssoAddressTemplate
-		pluginConfig.UrlMacPrivateKey = certificate.KeyFile.String()
+		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 		pluginConfig.IgnorePathRegex = "!/"
 
-		expectedSsoAddressTemplate = pluginConfig.SsoAddressTemplate
+		expectedSsoAddressTemplate = pluginConfig.SsoRedirectUrlAddressTemplate
 
 		return pluginConfig
 	})

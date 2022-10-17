@@ -2,6 +2,7 @@ package jwt_flow
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -24,12 +25,12 @@ var (
 // own ErrorHandler you MUST take into consideration the error types as not
 // properly responding to them or having a poorly implemented handler could
 // result in the JWTMiddleware not functioning as intended.
-type ErrorHandler func(w http.ResponseWriter, r *http.Request, err error)
+type ErrorHandler func(logger *zap.Logger, w http.ResponseWriter, r *http.Request, err error)
 
 // DefaultErrorHandler is the default error handler implementation for the
 // JWTMiddleware. If an error handler is not provided via the WithErrorHandler
 // option this will be used.
-func DefaultErrorHandler(w http.ResponseWriter, r *http.Request, err error) {
+func DefaultErrorHandler(logger *zap.Logger, w http.ResponseWriter, r *http.Request, err error) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch {

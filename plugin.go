@@ -3,11 +3,13 @@ package pluginoidc
 import (
 	"context"
 	"fmt"
+	guuid "github.com/google/uuid"
 	"github.com/taliesins/traefik-plugin-oidc/jwks"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow/validator"
+	"github.com/taliesins/traefik-plugin-oidc/log"
 	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"go.uber.org/zap"
 	"net/http"
 	"regexp"
 	"text/template"
@@ -15,6 +17,12 @@ import (
 )
 
 type Config struct {
+	SsoRedirectUrlAddressTemplate     string                     `json:"SsoRedirectUrlAddressTemplate,omitempty"`
+	SsoRedirectUrlMacClientSecret     string                     `json:"ssoRedirectUrlMacClientSecret,omitempty"`
+	SsoRedirectUrlMacPrivateKey       string                     `json:"ssoRedirectUrlMacPrivateKey,omitempty"`
+	SsoRedirectUrlMacStrength         sso_redirector.MacStrength `json:"ssoRedirectUrlMacStrength,omitempty"`
+	SsoRedirectUrlMacAllowedClockSkew time.Duration              `json:"ssoRedirectUrlMacAllowedClockSkew,omitempty"`
+
 	ClientSecret         string `json:"clientSecret,omitempty"`
 	PublicKey            string `json:"publicKey,omitempty"`
 	Issuer               string `json:"issuer,omitempty"`
@@ -22,16 +30,13 @@ type Config struct {
 	JwksAddress          string `json:"jwksAddress,omitempty"`
 	OidcDiscoveryAddress string `json:"oidcDiscoveryAddress,omitempty"`
 	UseDynamicValidation bool   `json:"useDynamicValidation,omitempty"`
-	SsoAddressTemplate   string `json:"ssoAddressTemplate,omitempty"`
-	UrlMacClientSecret   string `json:"urlMacClientSecret,omitempty"`
-	UrlMacPrivateKey     string `json:"urlMacPrivateKey,omitempty"`
 
 	AlgorithmValidationRegex string        `json:"algorithmValidationRegex,omitempty"`
 	AudienceValidationRegex  string        `json:"audienceValidationRegex,omitempty"`
 	IssuerValidationRegex    string        `json:"issuerValidationRegex,omitempty"`
 	SubjectValidationRegex   string        `json:"subjectValidationRegex,omitempty"`
 	IdValidationRegex        string        `json:"idValidationRegex,omitempty"`
-	AllowedClockSkew         time.Duration `json:"allowedClockSkew,omitempty"`
+	TokenAllowedClockSkew    time.Duration `json:"tokenAllowedClockSkew,omitempty"`
 	IgnorePathRegex          string        `json:"ignorePathRegex,omitempty"`
 	CredentialsOptional      bool          `json:"credentialsOptional,omitempty"`
 	ValidateOnOptions        bool          `json:"validateOnOptions,omitempty"`
@@ -40,6 +45,12 @@ type Config struct {
 // CreateConfig creates the default plugin configuration.
 func CreateConfig() *Config {
 	return &Config{
+		SsoRedirectUrlAddressTemplate:     "",
+		SsoRedirectUrlMacStrength:         sso_redirector.MacStrength_256,
+		SsoRedirectUrlMacClientSecret:     "",
+		SsoRedirectUrlMacPrivateKey:       "",
+		SsoRedirectUrlMacAllowedClockSkew: time.Minute * 30,
+
 		ClientSecret:         "",
 		PublicKey:            "",
 		Issuer:               "",
@@ -47,16 +58,13 @@ func CreateConfig() *Config {
 		JwksAddress:          "",
 		OidcDiscoveryAddress: "",
 		UseDynamicValidation: false,
-		SsoAddressTemplate:   "",
-		UrlMacClientSecret:   "",
-		UrlMacPrivateKey:     "",
 
 		AlgorithmValidationRegex: "",
 		AudienceValidationRegex:  "",
 		IssuerValidationRegex:    "",
 		SubjectValidationRegex:   "",
 		IdValidationRegex:        "",
-		AllowedClockSkew:         time.Minute * 5,
+		TokenAllowedClockSkew:    time.Minute * 5,
 		IgnorePathRegex:          "",
 		CredentialsOptional:      false,
 		ValidateOnOptions:        true,
@@ -64,42 +72,86 @@ func CreateConfig() *Config {
 }
 
 type Plugin struct {
+	logger *zap.Logger
 	ctx    context.Context
-	next   http.Handler
+	flow   jwt_flow.Flow
 	config *Config
 	name   string
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+	var err error
 
-	if config.Issuer == "" && config.Audience == "" && config.JwksAddress == "" && config.OidcDiscoveryAddress == "" && config.UseDynamicValidation == false && config.ClientSecret == "" && config.UrlMacPrivateKey == "" && config.UrlMacClientSecret == "" && config.PublicKey == "" {
-		return nil, fmt.Errorf("configuration must be set")
+	logger, err := log.New()
+	if err != nil {
+		err = fmt.Errorf("unable to intialize logger: %v", err)
+		return nil, err
+	}
+
+	// Parse config
+	if config.SsoRedirectUrlMacClientSecret == "" && config.SsoRedirectUrlMacPrivateKey == "" && config.SsoRedirectUrlAddressTemplate != "" {
+		err = fmt.Errorf("config value 'SsoRedirectUrlMacPrivateKey' or 'SsoRedirectUrlMacClientSecret' must be set if config value 'SsoRedirectUrlAddressTemplate' is specified")
+		logger.Fatal("Unable to parse config", zap.Error(err))
+		return nil, err
+	}
+
+	if config.Issuer == "" && config.Audience == "" && config.JwksAddress == "" && config.OidcDiscoveryAddress == "" && config.UseDynamicValidation == false && config.ClientSecret == "" && config.SsoRedirectUrlMacPrivateKey == "" && config.SsoRedirectUrlMacClientSecret == "" && config.PublicKey == "" {
+		err = fmt.Errorf("configuration must be set")
+		logger.Fatal("Unable to parse config", zap.Error(err))
+		return nil, err
 	}
 
 	if config.ClientSecret == "" && config.PublicKey == "" && config.Issuer == "" && config.OidcDiscoveryAddress == "" && config.JwksAddress == "" && config.Audience != "" && config.UseDynamicValidation {
-		return nil, fmt.Errorf("config value 'ClientSecret' or 'PublicKey' or 'Issuer' or 'OidcDiscoveryAddress' or 'JwksAddress' must be set if config value 'Audience' is specified")
+		err = fmt.Errorf("config value 'ClientSecret' or 'PublicKey' or 'Issuer' or 'OidcDiscoveryAddress' or 'JwksAddress' must be set if config value 'Audience' is specified")
+		logger.Fatal("Unable to parse config", zap.Error(err))
+		return nil, err
 	}
 
-	if config.Issuer == "" && config.OidcDiscoveryAddress == "" && config.JwksAddress == "" && config.UseDynamicValidation && config.SsoAddressTemplate != "" {
-		return nil, fmt.Errorf("config value 'Issuer' or 'OidcDiscoveryAddress' or 'JwksAddress' must be set if config value 'SsoAddressTemplate' is specified")
+	if config.Issuer == "" && config.OidcDiscoveryAddress == "" && config.JwksAddress == "" && config.UseDynamicValidation && config.SsoRedirectUrlAddressTemplate != "" {
+		err = fmt.Errorf("config value 'Issuer' or 'OidcDiscoveryAddress' or 'JwksAddress' must be set if config value 'SsoRedirectUrlAddressTemplate' is specified")
+		logger.Fatal("Unable to parse config", zap.Error(err))
+		return nil, err
 	}
-
-	if config.UrlMacClientSecret == "" && config.UrlMacPrivateKey == "" && config.SsoAddressTemplate != "" {
-		return nil, fmt.Errorf("config value 'UrlMacPrivateKey' or 'UrlMacClientSecret' must be set if config value 'SsoAddressTemplate' is specified")
-	}
-
-	var err error
 
 	//Redirect url for SSO
-	var ssoRedirectUrlTemplate *template.Template
-	if config.SsoAddressTemplate != "" {
-		ssoRedirectUrlTemplate, err = sso_redirector.GetSsoRedirectUrlTemplate(config.SsoAddressTemplate)
+	var ssoRedirectUrlAddressTemplate *template.Template
+	if config.SsoRedirectUrlAddressTemplate != "" {
+		ssoRedirectUrlAddressTemplate, err = sso_redirector.GetSsoRedirectUrlTemplate(config.SsoRedirectUrlAddressTemplate)
 		if err != nil {
-			log.Errorf("Unable to parse config SsoAddressTemplate: %s", err)
+			logger.Fatal("Unable to parse config SsoRedirectUrlAddressTemplate", zap.Error(err), zap.String("SsoRedirectUrlAddressTemplate", config.SsoRedirectUrlAddressTemplate))
 			return nil, err
 		}
 	} else {
-		ssoRedirectUrlTemplate = nil
+		ssoRedirectUrlAddressTemplate = nil
+	}
+
+	//Url hash using secret
+	var urlHashClientSecret []byte
+	if config.SsoRedirectUrlMacClientSecret != "" {
+		urlHashClientSecret = []byte(config.SsoRedirectUrlMacClientSecret)
+	} else {
+		urlHashClientSecret = nil
+	}
+
+	//Url hash using private key
+	var urlHashPrivateKey interface{}
+	if config.SsoRedirectUrlMacPrivateKey != "" {
+		urlHashPrivateKey, _, err = jwks.GetPrivateKeyFromFileOrContent(config.SsoRedirectUrlMacPrivateKey)
+		if err != nil {
+			logger.Fatal("Unable to parse config SsoRedirectUrlMacPrivateKey", zap.Error(err))
+			return nil, err
+		}
+	} else {
+		urlHashPrivateKey = nil
+	}
+
+	var ssoRedirectUrlMacSigningKey interface{}
+	if urlHashPrivateKey != nil {
+		ssoRedirectUrlMacSigningKey = urlHashPrivateKey
+	} else if urlHashClientSecret != nil {
+		ssoRedirectUrlMacSigningKey = urlHashClientSecret
+	} else {
+		ssoRedirectUrlMacSigningKey = nil
 	}
 
 	//Standard client secret Jwt validation
@@ -115,31 +167,11 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.PublicKey != "" {
 		publicKey, _, err = jwks.GetPublicKeyFromFileOrContent(config.PublicKey)
 		if err != nil {
-			log.Errorf("Unable to parse config PublicKey: %s", err)
+			logger.Fatal("Unable to parse config PublicKey", zap.Error(err), zap.String("PublicKey", config.PublicKey))
 			return nil, err
 		}
 	} else {
 		publicKey = nil
-	}
-
-	//Url hash using secret
-	var urlHashClientSecret []byte
-	if config.UrlMacClientSecret != "" {
-		urlHashClientSecret = []byte(config.UrlMacClientSecret)
-	} else {
-		urlHashClientSecret = nil
-	}
-
-	//Url hash using private key
-	var urlHashPrivateKey interface{}
-	if config.UrlMacPrivateKey != "" {
-		urlHashPrivateKey, _, err = jwks.GetPrivateKeyFromFileOrContent(config.UrlMacPrivateKey)
-		if err != nil {
-			log.WithoutContext().Errorf("Unable to parse config UrlMacPrivateKey: %s", err)
-			return nil, err
-		}
-	} else {
-		urlHashPrivateKey = nil
 	}
 
 	//Validations
@@ -147,7 +179,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.AlgorithmValidationRegex != "" {
 		algorithmValidationRegex, err = regexp.Compile(config.AlgorithmValidationRegex)
 		if err != nil {
-			log.Errorf("Unable to parse config AlgorithmValidationRegex: %s", err)
+			logger.Fatal("Unable to parse config AlgorithmValidationRegex", zap.Error(err), zap.String("AlgorithmValidationRegex", config.AlgorithmValidationRegex))
 			return nil, err
 		}
 	} else {
@@ -158,7 +190,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.IssuerValidationRegex != "" {
 		issuerValidationRegex, err = regexp.Compile(config.IssuerValidationRegex)
 		if err != nil {
-			log.Errorf("Unable to parse config IssuerValidationRegex: %s", err)
+			logger.Fatal("Unable to parse config IssuerValidationRegex", zap.Error(err), zap.String("IssuerValidationRegex", config.IssuerValidationRegex))
 			return nil, err
 		}
 	} else {
@@ -169,7 +201,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.AudienceValidationRegex != "" {
 		audienceValidationRegex, err = regexp.Compile(config.AudienceValidationRegex)
 		if err != nil {
-			log.Errorf("Unable to parse config AudienceValidationRegex: %s", err)
+			logger.Fatal("Unable to parse config AudienceValidationRegex", zap.Error(err), zap.String("AudienceValidationRegex", config.AudienceValidationRegex))
 			return nil, err
 		}
 	} else {
@@ -180,7 +212,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.SubjectValidationRegex != "" {
 		subjectValidationRegex, err = regexp.Compile(config.SubjectValidationRegex)
 		if err != nil {
-			log.Errorf("Unable to parse config AudienceValidationRegex: %s", err)
+			logger.Fatal("Unable to parse config SubjectValidationRegex", zap.Error(err), zap.String("SubjectValidationRegex", config.SubjectValidationRegex))
 			return nil, err
 		}
 	} else {
@@ -191,7 +223,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.IdValidationRegex != "" {
 		idValidationRegex, err = regexp.Compile(config.IdValidationRegex)
 		if err != nil {
-			log.Errorf("Unable to parse config IdValidationRegex: %s", err)
+			logger.Fatal("Unable to parse config IdValidationRegex", zap.Error(err), zap.String("IdValidationRegex", config.IdValidationRegex))
 			return nil, err
 		}
 	} else {
@@ -203,26 +235,15 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.IgnorePathRegex != "" {
 		ignorePathRegex, err = regexp.Compile(config.IgnorePathRegex)
 		if err != nil {
-			log.Errorf("Unable to parse config IgnorePathRegex: %s", err)
+			logger.Fatal("Unable to parse config IgnorePathRegex", zap.Error(err), zap.String("IgnorePathRegex", config.IgnorePathRegex))
 			return nil, err
 		}
 	} else {
 		ignorePathRegex = nil
 	}
 
-	var key interface{}
-	if urlHashPrivateKey != nil {
-		key = urlHashPrivateKey
-	} else if urlHashClientSecret != nil {
-		key = urlHashClientSecret
-	} else {
-		key = nil
-	}
-
-	macStrength := sso_redirector.MacStrength_256
-
-	errorHandler := jwt_flow.OidcErrorHandler(ssoRedirectUrlTemplate, key, macStrength)
-	oidcSuccessHandler := jwt_flow.OidcSuccessHandler(key, macStrength, config.AllowedClockSkew)
+	errorHandler := jwt_flow.OidcErrorHandler(ssoRedirectUrlAddressTemplate, ssoRedirectUrlMacSigningKey, config.SsoRedirectUrlMacStrength)
+	successHandler := jwt_flow.OidcSuccessHandler(ssoRedirectUrlMacSigningKey, config.SsoRedirectUrlMacStrength, config.SsoRedirectUrlMacAllowedClockSkew)
 	tokenExtractor := jwt_flow.OidcTokenExtractor()
 	tokenValidator := validator.OidcTokenValidator(
 		algorithmValidationRegex,
@@ -230,7 +251,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		audienceValidationRegex,
 		subjectValidationRegex,
 		idValidationRegex,
-		config.AllowedClockSkew,
+		config.TokenAllowedClockSkew,
 		clientSecret,
 		publicKey,
 		config.Issuer,
@@ -239,25 +260,32 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		config.UseDynamicValidation,
 	)
 
-	oidcMiddleware := jwt_flow.New(tokenValidator,
+	oidcMiddleware := jwt_flow.New(
+		tokenValidator,
 		jwt_flow.WithCredentialsOptional(config.CredentialsOptional),
 		jwt_flow.WithValidateOnOptions(config.ValidateOnOptions),
 		jwt_flow.WithIgnorePathOptions(ignorePathRegex),
 		jwt_flow.WithTokenExtractor(tokenExtractor),
 		jwt_flow.WithErrorHandler(errorHandler),
-		jwt_flow.WithSuccessHandler(oidcSuccessHandler),
+		jwt_flow.WithSuccessHandler(successHandler),
 	)
 
-	oidcHandler := oidcMiddleware.CheckJWT(next)
+	flow := oidcMiddleware.DefaultFlow(next)
 
 	return &Plugin{
+		logger: logger,
 		ctx:    ctx,
 		name:   name,
 		config: config,
-		next:   oidcHandler,
+		flow:   flow,
 	}, nil
 }
 
+const LogFieldRequestID = "requestID"
+
 func (a *Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	a.next.ServeHTTP(rw, req)
+	requestId := guuid.NewString()                                              //TODO: see if we can plugin to tracing plugins like jaeger/zipkin to get the tracing id. See  https://doc.traefik.io/traefik/observability/tracing/overview/
+	loggerForRequest := a.logger.With(zap.String(LogFieldRequestID, requestId)) // it is a clone of the parent logger with the same properties but any additional changes will not be propagated to parent
+	a.flow(loggerForRequest, rw, req)
+	loggerForRequest.Sync()
 }

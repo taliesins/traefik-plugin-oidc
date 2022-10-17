@@ -3,6 +3,7 @@ package jwt_flow
 import (
 	"context"
 	"fmt"
+	"go.uber.org/zap"
 	"net/http"
 	"regexp"
 )
@@ -27,7 +28,7 @@ type JWTMiddleware struct {
 // an error message describing why validation failed.
 // Inside ValidateToken things like key and alg checking can happen.
 // In the default implementation we can add safe defaults for those.
-type ValidateToken func(context.Context, string) (interface{}, error)
+type ValidateToken func(logger *zap.Logger, context context.Context, token string) (interface{}, error)
 
 // New constructs a new JWTMiddleware instance with the supplied options.
 // It requires a ValidateToken function to be passed in, so it can
@@ -50,27 +51,29 @@ func New(validateToken ValidateToken, opts ...Option) *JWTMiddleware {
 	return m
 }
 
-// CheckJWT is the main JWTMiddleware function which performs the main logic. It
-// is passed a http.Handler which will be called if the JWT passes validation.
-func (m *JWTMiddleware) CheckJWT(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// Flow is the orchestration flow that is used
+type Flow func(logger *zap.Logger, w http.ResponseWriter, r *http.Request)
+
+// DefaultFlow is jwt token extraction, jwt token validation and then either success or failure handlers
+func (m *JWTMiddleware) DefaultFlow(next http.Handler) Flow {
+	return func(logger *zap.Logger, w http.ResponseWriter, r *http.Request) {
 		// If we don't validate on OPTIONS and this is OPTIONS
 		// then continue onto next without validating.
 		if !m.validateOnOptions && r.Method == http.MethodOptions {
-			m.successHandler(next, w, r, "")
+			m.successHandler(logger, next, w, r, "")
 			return
 		}
 
 		if m.ignorePathRegex != nil && m.ignorePathRegex.MatchString(r.URL.Path) {
-			m.successHandler(next, w, r, "")
+			m.successHandler(logger, next, w, r, "")
 			return
 		}
 
-		token, err := m.tokenExtractor(r)
+		token, err := m.tokenExtractor(logger, r)
 		if err != nil {
 			// This is not ErrJWTMissing because an error here means that the
 			// tokenExtractor had an error and _not_ that the token was missing.
-			m.errorHandler(w, r, fmt.Errorf("error extracting token: %w", err))
+			m.errorHandler(logger, w, r, fmt.Errorf("error extracting token: %w", err))
 			return
 		}
 
@@ -78,26 +81,26 @@ func (m *JWTMiddleware) CheckJWT(next http.Handler) http.Handler {
 			// If credentials are optional continue
 			// onto next without validating.
 			if m.credentialsOptional {
-				m.successHandler(next, w, r, "")
+				m.successHandler(logger, next, w, r, "")
 				return
 			}
 
 			// Credentials were not optional so we error.
-			m.errorHandler(w, r, ErrJWTMissing)
+			m.errorHandler(logger, w, r, ErrJWTMissing)
 			return
 		}
 
 		// Validate the token using the token validator.
-		validToken, err := m.validateToken(r.Context(), token)
+		validToken, err := m.validateToken(logger, r.Context(), token)
 		if err != nil {
-			m.errorHandler(w, r, &invalidError{details: err})
+			m.errorHandler(logger, w, r, &invalidError{details: err})
 			return
 		}
 
 		// No err means we have a valid token, so set
 		// it into the context and continue onto next.
 		r = r.Clone(context.WithValue(r.Context(), ContextKey{}, validToken))
-		m.successHandler(next, w, r, token)
+		m.successHandler(logger, next, w, r, token)
 		return
-	})
+	}
 }

@@ -170,8 +170,8 @@ func BuildTestServers(publicKeyRootPath string, privateKeyRootPath string, overr
 		overridePluginConfiguration(pluginConfiguration, certificate, ssoAddressTemplate, issuerUri, oidcDiscoveryUri, jwksUri)
 	} else {
 		pluginConfiguration.OidcDiscoveryAddress = oidcDiscoveryUri.String()
-		pluginConfiguration.SsoAddressTemplate = ssoAddressTemplate
-		pluginConfiguration.UrlMacPrivateKey = certificate.KeyFile.String()
+		pluginConfiguration.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+		pluginConfiguration.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 	}
 
 	pluginServer, err = buildPluginServer(pluginConfiguration)
