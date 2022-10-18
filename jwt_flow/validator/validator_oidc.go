@@ -71,7 +71,7 @@ func validateClaims(err error, token *jwt.JSONWebToken, key interface{}, issuerV
 
 	if audienceValidationRegex != nil {
 		for _, v := range registeredClaims.Audience {
-			if !issuerValidationRegex.MatchString(v) {
+			if !audienceValidationRegex.MatchString(v) {
 				return nil, jwt.ErrInvalidAudience
 			}
 		}
@@ -120,12 +120,11 @@ func keyFunc(token *jwt.JSONWebToken, algorithmValidationRegex *regexp.Regexp, i
 		return clientSecret, nil
 	}
 
-	if publicKey != nil && currentKeyId == "" && (issuer == "" && jwksAddress == "" && oidcDiscoveryAddress == "" && !useDynamicValidation) {
-		//TODO: Validate for ES256,ES384,ES512?
+	if publicKey != nil && currentKeyId == "" {
 		return publicKey, nil
 	}
 
-	if publicKey == nil && currentKeyId != "" && jwksAddress != "" {
+	if currentKeyId != "" && jwksAddress != "" {
 		publicKey, _, err := jwks.GetPublicKeyFromJwksUri(currentKeyId, jwksAddress)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get public key from jwks address %s for currentKeyId %s with error %s", jwksAddress, currentKeyId, err)
@@ -133,7 +132,7 @@ func keyFunc(token *jwt.JSONWebToken, algorithmValidationRegex *regexp.Regexp, i
 		return publicKey, nil
 	}
 
-	if publicKey == nil && currentKeyId != "" && oidcDiscoveryAddress != "" {
+	if currentKeyId != "" && oidcDiscoveryAddress != "" {
 		publicKey, _, err := jwks.GetPublicKeyFromOpenIdConnectDiscoveryUri(currentKeyId, oidcDiscoveryAddress)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get public key from discovery address %s for currentKeyId %s with error %s", oidcDiscoveryAddress, currentKeyId, err)
@@ -141,7 +140,7 @@ func keyFunc(token *jwt.JSONWebToken, algorithmValidationRegex *regexp.Regexp, i
 		return publicKey, nil
 	}
 
-	if publicKey == nil && currentKeyId == "" && useDynamicValidation {
+	if currentKeyId != "" && useDynamicValidation {
 		currentIssuer := ""
 		unsafeClaimsWithoutVerification := &jwt.Claims{}
 		err := token.UnsafeClaimsWithoutVerification(unsafeClaimsWithoutVerification)

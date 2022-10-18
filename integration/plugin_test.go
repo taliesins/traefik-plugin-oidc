@@ -203,6 +203,7 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
+		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
 		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
@@ -226,67 +227,13 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 	res, err := client.Do(req)
 
 	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
-
-	body, err := io.ReadAll(res.Body)
-
-	expectedRedirectUri, err := url.Parse(res.Request.URL.String())
-	if err != nil {
-		panic(err)
-	}
-
-	expectedRedirectUri.Path = sso_redirector.CallbackPath
-
-	expectedBodyRegex, err := regexp.Compile("\n<!DOCTYPE html><html><head><title></title></head><body>\n\n<script>\nwindow.location.replace\\('(.*)'\\);\n</script>\nPlease sign in at <a href='(.*)'>(.*)</a>\n</body></html>\n\n")
-	expectedBodyMatches := expectedBodyRegex.FindStringSubmatch(string(body))
-	assert.Len(t, expectedBodyMatches, 4, "Expect 4 matches")
-	bodyMatch := expectedBodyMatches[1]
-
-	redirectUrlRegex := strings.Replace(strings.Replace(strings.Replace(sso_redirector.TemplateToRegexFixer(htmlTemplate.JSEscapeString(expectedSsoAddressTemplate)), "{{.CallbackUrl}}", "(.*)", -1), "{{.State}}", "(.*)", -1), "{{.Nonce}}", "(.*)", -1)
-	expectedRedirectUrlRegex, err := regexp.Compile(redirectUrlRegex)
-	expectedRedirectUrlMatches := expectedRedirectUrlRegex.FindStringSubmatch(bodyMatch)
-	assert.Len(t, expectedRedirectUrlMatches, 4, "Expect 4 matches")
-	nonceMatch := expectedRedirectUrlMatches[1]
-	redirectUriMatch := expectedRedirectUrlMatches[2]
-	stateMatch := expectedRedirectUrlMatches[3]
-
-	stateMatchQuerystringString, err := url.QueryUnescape(stateMatch)
-	if err != nil {
-		panic(err)
-	}
-
-	stateMatchQuerystring, err := url.ParseQuery(stateMatchQuerystringString)
-	if err != nil {
-		panic(err)
-	}
-
-	hash := stateMatchQuerystring.Get("hash")
-	iatUnixEpochSeconds, err := strconv.ParseInt(stateMatchQuerystring.Get("iat"), 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	iat := time.Unix(iatUnixEpochSeconds, 0)
-	allowedClockSkew := time.Second * 5
-	nonce := stateMatchQuerystring.Get("nonce")
-	redirectUri, err := url.Parse(stateMatchQuerystring.Get("redirect_uri"))
-	if err != nil {
-		panic(err)
-	}
-
-	assert.NotEmpty(t, nonceMatch, "nonce should be specified by the server")
-	assert.EqualValues(t, url.QueryEscape(expectedRedirectUri.String()), redirectUriMatch, "redirect_uri should be specified")
-	assert.NotEqual(t, url.QueryEscape(""), stateMatch, "state should be specified")
-	assert.NotEqual(t, url.QueryEscape(""), hash, "hash should be specified")
-	assert.True(t, time.Now().UTC().Before(iat.Add(allowedClockSkew)), "iat is larger then expected")
-	assert.True(t, time.Now().UTC().After(iat.Add(-1*(allowedClockSkew))), "iat is smaller then expected")
-	assert.EqualValues(t, nonceMatch, nonce, "nonce should match")
-	assert.NotEqual(t, url.QueryEscape(""), redirectUri, "redirectUri should be specified")
+	AssertRedirectPageIsReturned(t, res, expectedSsoAddressTemplate)
 }
 
 func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
+		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
 		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
@@ -326,6 +273,7 @@ func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {
 func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
+		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
 		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
@@ -338,7 +286,7 @@ func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	client, _, _, signedToken, clientRequestUrl, expectedRedirectorUrl, err := BuildTestClient(certificate, "", jwksServer, pluginServer, jwtgo.SigningMethodRS256, "", nil, nil, nil)
+	client, _, _, signedToken, clientRequestUrl, expectedRedirectorUrl, err := BuildTestClient(certificate, "", jwksServer, pluginServer, jwtgo.SigningMethodRS256, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 	if err != nil {
 		panic(err)
 	}
@@ -368,6 +316,7 @@ func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
 func TestRedirectorWithInvalidCookieAndValidHashSuccess(t *testing.T) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
+		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
 		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
@@ -456,6 +405,7 @@ func TestRedirectorWithValidCookieAndValidHashAndUsingDiscoveryAddressSuccess(t 
 func TestRedirectorWithValidPostAndValidHashSuccess(t *testing.T) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
+		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
 		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 
@@ -468,7 +418,7 @@ func TestRedirectorWithValidPostAndValidHashSuccess(t *testing.T) {
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	client, _, _, signedToken, _, expectedRedirectorUrl, err := BuildTestClient(certificate, "", jwksServer, pluginServer, jwtgo.SigningMethodRS256, "", nil, nil, nil)
+	client, _, _, signedToken, _, expectedRedirectorUrl, err := BuildTestClient(certificate, "", jwksServer, pluginServer, jwtgo.SigningMethodRS256, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 	if err != nil {
 		panic(err)
 	}
@@ -499,6 +449,7 @@ func TestWithNoAuthenticationAndIgnorePathMatched(t *testing.T) {
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
+		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
 		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 		pluginConfig.IgnorePathRegex = "/"
@@ -536,6 +487,7 @@ func TestWithNoAuthenticationAndIgnorePathNotMatched(t *testing.T) {
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
+		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
 		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
 		pluginConfig.IgnorePathRegex = "!/"
@@ -551,15 +503,19 @@ func TestWithNoAuthenticationAndIgnorePathNotMatched(t *testing.T) {
 	defer pluginServer.Close()
 
 	//client, nonce, issuedAt, signedToken, expectedRedirectorUrl, err
-	client, nonce, _, _, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, jwtgo.SigningMethodRS256, "", nil, nil, nil)
+	client, _, _, _, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, jwtgo.SigningMethodRS256, "", nil, nil, nil)
 	if err != nil {
 		panic(err)
 	}
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 	res, err := client.Do(req)
-
 	assert.NoError(t, err, "there should be no error")
+
+	AssertRedirectPageIsReturned(t, res, expectedSsoAddressTemplate)
+}
+
+func AssertRedirectPageIsReturned(t *testing.T, res *http.Response, expectedSsoAddressTemplate string) {
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
@@ -576,17 +532,47 @@ func TestWithNoAuthenticationAndIgnorePathNotMatched(t *testing.T) {
 	assert.Len(t, expectedBodyMatches, 4, "Expect 4 matches")
 	bodyMatch := expectedBodyMatches[1]
 
-	redirectUrlRegex := strings.Replace(strings.Replace(strings.Replace(sso_redirector.TemplateToRegexFixer(expectedSsoAddressTemplate), "{{.CallbackUrl}}", "(.*)", -1), "{{.State}}", "(.*)", -1), "{{.Nonce}}", "(.*)", -1)
+	redirectUrlRegex := strings.Replace(strings.Replace(strings.Replace(sso_redirector.TemplateToRegexFixer(htmlTemplate.JSEscapeString(expectedSsoAddressTemplate)), "{{.CallbackUrl}}", "(.*)", -1), "{{.State}}", "(.*)", -1), "{{.Nonce}}", "(.*)", -1)
 	expectedRedirectUrlRegex, err := regexp.Compile(redirectUrlRegex)
 	expectedRedirectUrlMatches := expectedRedirectUrlRegex.FindStringSubmatch(bodyMatch)
 	assert.Len(t, expectedRedirectUrlMatches, 4, "Expect 4 matches")
+
 	nonceMatch := expectedRedirectUrlMatches[1]
 	redirectUriMatch := expectedRedirectUrlMatches[2]
 	stateMatch := expectedRedirectUrlMatches[3]
 
-	assert.Equal(t, nonce, nonceMatch, "nonce should be specified")
+	stateMatchQuerystringString, err := url.QueryUnescape(stateMatch)
+	if err != nil {
+		panic(err)
+	}
+
+	stateMatchQuerystring, err := url.ParseQuery(stateMatchQuerystringString)
+	if err != nil {
+		panic(err)
+	}
+
+	hash := stateMatchQuerystring.Get("hash")
+	iatUnixEpochSeconds, err := strconv.ParseInt(stateMatchQuerystring.Get("iat"), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	iat := time.Unix(iatUnixEpochSeconds, 0)
+	allowedClockSkew := time.Second * 5
+	nonce := stateMatchQuerystring.Get("nonce")
+	redirectUri, err := url.Parse(stateMatchQuerystring.Get("redirect_uri"))
+	if err != nil {
+		panic(err)
+	}
+
+	assert.NotEmpty(t, nonceMatch, "nonce should be specified by the server")
 	assert.EqualValues(t, url.QueryEscape(expectedRedirectUri.String()), redirectUriMatch, "redirect_uri should be specified")
 	assert.NotEqual(t, url.QueryEscape(""), stateMatch, "state should be specified")
+	assert.NotEqual(t, url.QueryEscape(""), hash, "hash should be specified")
+	assert.True(t, time.Now().UTC().Before(iat.Add(allowedClockSkew)), "iat is larger then expected")
+	assert.True(t, time.Now().UTC().After(iat.Add(-1*(allowedClockSkew))), "iat is smaller then expected")
+	assert.EqualValues(t, nonceMatch, nonce, "nonce should match")
+	assert.NotEqual(t, url.QueryEscape(""), redirectUri, "redirectUri should be specified")
 }
 
 func TestWithValidCredentialsAndAlgorithmRegexSuccess(t *testing.T) {
@@ -707,7 +693,6 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimarySuccess(t *testing.
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
-		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.UseDynamicValidation = true
 		return pluginConfig
 	}
@@ -726,7 +711,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimarySuccess(t *testing.
 	defer dynamicJwksServer.Close()
 
 	//Client is making request with a token that is signed by the primary jwks server
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 
@@ -747,7 +732,6 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicSuccess(t *testing.
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
-		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.UseDynamicValidation = true
 		return pluginConfig
 	}
@@ -766,7 +750,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicSuccess(t *testing.
 	defer dynamicJwksServer.Close()
 
 	//Client is making request with a token that is signed by the dynamic jwks server
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(dynamicCertificate, "", dynamicJwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(dynamicCertificate, "", dynamicJwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 
@@ -787,7 +771,6 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimaryFailure(t *testing.
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
-		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.UseDynamicValidation = true
 		return pluginConfig
 	}
@@ -811,7 +794,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimaryFailure(t *testing.
 	if err != nil {
 		panic(err)
 	}
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(dodgyCertificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(dodgyCertificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 
@@ -828,7 +811,6 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicFailure(t *testing.
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
-		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.UseDynamicValidation = true
 		return pluginConfig
 	}
@@ -852,7 +834,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicFailure(t *testing.
 	if err != nil {
 		panic(err)
 	}
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(dodgyCertificate, "", dynamicJwksServer, pluginServer, signingMethod, "", nil, nil, nil)
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(dodgyCertificate, "", dynamicJwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 

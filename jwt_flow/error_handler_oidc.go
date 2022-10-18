@@ -22,7 +22,7 @@ func OidcErrorHandler(
 ) ErrorHandler {
 	return func(logger *zap.Logger, w http.ResponseWriter, r *http.Request, err error) {
 		if ssoRedirectUrlTemplate == nil {
-			logger.Error("No ssoRedirectUrlTemplate specified")
+			logger.Debug("No ssoRedirectUrlTemplate specified")
 			http.Error(w, "", http.StatusUnauthorized)
 			return
 		}

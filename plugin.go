@@ -89,6 +89,10 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	}
 
 	// Parse config
+	if config.UseDynamicValidation == true && (config.Issuer == "" && config.IssuerValidationRegex == "") {
+		logger.Warn("DANGER DANGER DANGER when 'UseDynamicValidation' = 'true' and 'Issuer' = '' and 'IssuerValidationRegex' = '', then tokens from any IdP will be trusted - this is an insecure configuration DANGER DANGER DANGER")
+	}
+
 	if config.SsoRedirectUrlMacClientSecret == "" && config.SsoRedirectUrlMacPrivateKey == "" && config.SsoRedirectUrlAddressTemplate != "" {
 		err = fmt.Errorf("config value 'SsoRedirectUrlMacPrivateKey' or 'SsoRedirectUrlMacClientSecret' must be set if config value 'SsoRedirectUrlAddressTemplate' is specified")
 		logger.Fatal("Unable to parse config", zap.Error(err))
@@ -101,14 +105,14 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		return nil, err
 	}
 
-	if config.ClientSecret == "" && config.PublicKey == "" && config.Issuer == "" && config.OidcDiscoveryAddress == "" && config.JwksAddress == "" && config.Audience != "" && config.UseDynamicValidation {
-		err = fmt.Errorf("config value 'ClientSecret' or 'PublicKey' or 'Issuer' or 'OidcDiscoveryAddress' or 'JwksAddress' must be set if config value 'Audience' is specified")
+	if !(config.ClientSecret != "" || config.PublicKey != "" || config.OidcDiscoveryAddress != "" || config.JwksAddress != "" || (config.Issuer != "" && config.UseDynamicValidation == true)) && config.Audience != "" {
+		err = fmt.Errorf("config value 'ClientSecret' or 'PublicKey' or 'OidcDiscoveryAddress' or 'JwksAddress' or 'Issuer' with UseDynamicValidation enabled, if config value 'Audience' is specified")
 		logger.Fatal("Unable to parse config", zap.Error(err))
 		return nil, err
 	}
 
-	if config.Issuer == "" && config.OidcDiscoveryAddress == "" && config.JwksAddress == "" && config.UseDynamicValidation && config.SsoRedirectUrlAddressTemplate != "" {
-		err = fmt.Errorf("config value 'Issuer' or 'OidcDiscoveryAddress' or 'JwksAddress' must be set if config value 'SsoRedirectUrlAddressTemplate' is specified")
+	if (config.ClientSecret == "" && config.PublicKey == "") && !(config.OidcDiscoveryAddress != "" || config.JwksAddress != "" || (config.Issuer != "" && config.UseDynamicValidation == true)) && config.SsoRedirectUrlAddressTemplate != "" {
+		err = fmt.Errorf("'OidcDiscoveryAddress' or 'JwksAddress' or 'Issuer' with UseDynamicValidation enabled, if config value 'SsoRedirectUrlAddressTemplate' is specified and 'ClientSecret' and 'PublicKey' have not been configured")
 		logger.Fatal("Unable to parse config", zap.Error(err))
 		return nil, err
 	}
