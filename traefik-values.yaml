@@ -1,0 +1,13 @@
+deployment:
+  additionalVolumes:
+    - name: plugins-local
+      emptyDir: { }
+  initContainers:
+    - name: traefik-plugin-oidc
+      image: traefik-plugin-oidc:latest
+      volumeMounts:
+        - name: plugins-local
+          mountPath: /plugins-local
+additionalVolumeMounts:
+  - name: plugins-local
+    mountPath: /plugins-local

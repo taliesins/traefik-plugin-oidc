@@ -1,0 +1,6 @@
+.git
+.assets
+.gitignore
+.golangci.yml
+Dockerfile
+Makefile
