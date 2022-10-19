@@ -1,29 +1,32 @@
 displayName: OIDC Plugin
 type: middleware
+import: github.com/taliesins/traefik-plugin-oidc
+summary: 'Redirects to SSO if JWT token not present or invalid. JWT tokens are verified. Supports RSA/DSA/HMAC. Support fetching keys from JWKS endpoint. '
 iconPath: .assets/icon.png
 
-import: github.com/taliesins/traefik-plugin-oidc
-
-summary: 'Redirects to SSO if OIDC token not present or invalid. JWT tokens are verified. Supports RSA/DSA/HMAC. Support fetching keys from JWKS endpoint. '
-
 testData:
-  ClientSecret: ""           
-	PublicKey: ""               
-	Issuer: ""                  
-	Audience: ""                
-	JwksAddress: ""             
-	DiscoveryAddress: ""
-	UseDynamicValidation: ""     bool   `json:"useDynamicValidation,omitempty"`
-	SsoAddressTemplate: ""       string `json:"ssoAddressTemplate,omitempty"`
-	UrlMacClientSecret: ""       string `json:"urlMacClientSecret,omitempty"`
-	UrlMacPrivateKey: ""         string `json:"urlMacPrivateKey,omitempty"`
-	AlgorithmValidationRegex: "" string `json:"algorithmValidationRegex,omitempty"`
-	AudienceValidationRegex: ""  string `json:"audienceValidationRegex,omitempty"`
-	IssuerValidationRegex: ""    string `json:"issuerValidationRegex,omitempty"`
-	SubjectValidationRegex: ""   string `json:"subjectValidationRegex,omitempty"`
-	IgnorePathRegex: ""          string `json:"ignorePathRegex,omitempty"`
+	SsoRedirectUrlAddressTemplate:     "",
+	SsoRedirectUrlMacStrength:         "256",
+	SsoRedirectUrlMacClientSecret:     "password",
+	SsoRedirectUrlMacPrivateKey:       "",
+	SsoRedirectUrlMacAllowedClockSkew: "1800000000000",
+
+	ClientSecret:         "password",
+	PublicKey:            "",
+	Issuer:               "",
+	Audience:             "",
+	JwksAddress:          "",
+	OidcDiscoveryAddress: "",
+	UseDynamicValidation: false,
+
+	AlgorithmValidationRegex: "",
+	AudienceValidationRegex:  "",
+	IssuerValidationRegex:    "",
+	SubjectValidationRegex:   "",
+	IdValidationRegex:        "",
+	TokenAllowedClockSkew:    "300000000000",
+	IgnorePathRegex:          "",
+	CredentialsOptional:      false,
+	ValidateOnOptions:        true,
 
 
-  Headers:
-    X-Demo: test
-    X-URL: '{{URL}}'
