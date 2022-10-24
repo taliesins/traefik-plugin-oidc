@@ -8,7 +8,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"gopkg.in/square/go-jose.v2"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -28,7 +28,7 @@ type jwksCacheValue struct {
 }
 
 func init() {
-	l, err := lru.New(128)
+	l, err := lru.NewWithEvict(128, func(key interface{}, value interface{}) {})
 	if err != nil {
 		log.Fatal("Cannot initialize cache")
 	}
@@ -45,11 +45,14 @@ func DownloadOpenIdConnectDiscoveryUri(openIdConnectDiscoveryUri string) (string
 		return "", err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		return "", err
+	}
 
 	data := make(map[string]interface{})
 	err = json.Unmarshal(body, &data)
@@ -68,7 +71,7 @@ func DownloadOpenIdConnectDiscoveryUri(openIdConnectDiscoveryUri string) (string
 
 func GetJwksUriFromOpenIdConnectDiscoveryUri(openIdConnectDiscoveryUri string) (jwksUri string, err error) {
 	// Try to get and return existing entry from cache. If cache is expired,
-	// it will try proceed with rest of the function call
+	// it will try to proceed with rest of the function call
 	cached, ok := lruCache.Get(openIdConnectDiscoveryUri)
 	if ok {
 		jwksUri = cached.(*openIdConnectDiscoveryCacheValue).JwksUri
@@ -123,11 +126,14 @@ func DownloadJwksUri(jwksUri string) (*jose.JSONWebKeySet, error) {
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	jwks := &jose.JSONWebKeySet{}
 	err = json.Unmarshal(body, jwks)
@@ -142,7 +148,7 @@ func GetPublicKeyFromJwksUri(kid string, jwksUri string) (interface{}, x509.Sign
 	cacheKey := fmt.Sprintf("%s|%s", jwksUri, kid)
 
 	// Try to get and return existing entry from cache. If cache is expired,
-	// it will try proceed with rest of the function call
+	// it will try to proceed with rest of the function call
 	cached, ok := lruCache.Get(cacheKey)
 	if ok {
 		val := cached.(*jwksCacheValue)
@@ -175,7 +181,7 @@ func GetPublicKeyFromJwksUri(kid string, jwksUri string) (interface{}, x509.Sign
 
 func GetPrivateKeyFromFileOrContent(certificateFileOrContents string) (interface{}, x509.SignatureAlgorithm, error) {
 	// Try to get and return existing entry from cache. If cache is expired,
-	// it will try proceed with rest of the function call
+	// it will try to proceed with rest of the function call
 	cached, ok := lruCache.Get(certificateFileOrContents)
 	if ok {
 		val := cached.(*jwksCacheValue)
@@ -227,7 +233,7 @@ func GetPublicKeyFromJwks(jwks *jose.JSONWebKeySet, kid string) (interface{}, x5
 
 func GetPublicKeyFromFileOrContent(certificateFileOrContents string) (interface{}, x509.SignatureAlgorithm, error) {
 	// Try to get and return existing entry from cache. If cache is expired,
-	// it will try proceed with rest of the function call
+	// it will try to proceed with rest of the function call
 	cached, ok := lruCache.Get(certificateFileOrContents)
 	if ok {
 		val := cached.(*jwksCacheValue)

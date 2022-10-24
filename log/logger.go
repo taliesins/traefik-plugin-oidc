@@ -25,6 +25,6 @@ func New() (logger *zap.Logger, err error) {
 	)
 
 	logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(stackTraceAppendLevelToLog))
-	
+
 	return logger, nil
 }
