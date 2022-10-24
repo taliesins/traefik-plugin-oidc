@@ -1,0 +1,11 @@
+{{ if eq .Values.traefik.enabled true }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-traefik-dashboard-middleware-redirect
+spec:
+  redirectRegex:
+    regex: ^http://dashboard.localhost/$$
+    replacement: http://dashboard.localhost/dashboard/
+---
+{{ end }}

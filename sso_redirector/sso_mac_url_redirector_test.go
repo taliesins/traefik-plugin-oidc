@@ -3,7 +3,6 @@ package sso_redirector
 import (
 	"fmt"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"net/url"
 	"os"
 	"path"
@@ -42,9 +41,9 @@ func getPrivateKeyForTest(relativePathToCert string) (interface{}, error) {
 
 	privateKeyPath := fmt.Sprintf("%s.key", certPath)
 
-	certificate := &traefiktls.Certificate{
-		CertFile: traefiktls.FileOrContent(publicKeyPath),
-		KeyFile:  traefiktls.FileOrContent(privateKeyPath),
+	certificate := &jwt_certificate.Certificate{
+		CertFile: jwt_certificate.FileOrContent(publicKeyPath),
+		KeyFile:  jwt_certificate.FileOrContent(privateKeyPath),
 	}
 
 	if !certificate.CertFile.IsPath() {
@@ -79,9 +78,9 @@ func getPublicKeyForTest(relativePathToCert string) (interface{}, error) {
 
 	privateKeyPath := fmt.Sprintf("%s.key", certPath)
 
-	certificate := &traefiktls.Certificate{
-		CertFile: traefiktls.FileOrContent(publicKeyPath),
-		KeyFile:  traefiktls.FileOrContent(privateKeyPath),
+	certificate := &jwt_certificate.Certificate{
+		CertFile: jwt_certificate.FileOrContent(publicKeyPath),
+		KeyFile:  jwt_certificate.FileOrContent(privateKeyPath),
 	}
 
 	if !certificate.CertFile.IsPath() {

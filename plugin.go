@@ -1,8 +1,13 @@
-package pluginoidc
+package traefik_plugin_oidc
 
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"regexp"
+	"text/template"
+	"time"
+
 	guuid "github.com/google/uuid"
 	"github.com/taliesins/traefik-plugin-oidc/jwks"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
@@ -10,10 +15,6 @@ import (
 	"github.com/taliesins/traefik-plugin-oidc/log"
 	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
 	"go.uber.org/zap"
-	"net/http"
-	"regexp"
-	"text/template"
-	"time"
 )
 
 type Config struct {

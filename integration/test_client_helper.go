@@ -6,11 +6,10 @@ import (
 	jwtgo "github.com/golang-jwt/jwt/v4"
 	guuid "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	pluginoidc "github.com/taliesins/traefik-plugin-oidc"
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
 	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,11 +21,11 @@ import (
 
 type overrideClient func(*http.Client) *http.Client
 
-type overrideClaims func(claims *jwtgo.RegisteredClaims, certificate *traefiktls.Certificate, jwksServer *httptest.Server, middlwareServer *httptest.Server) *jwtgo.RegisteredClaims
+type overrideClaims func(claims *jwtgo.RegisteredClaims, certificate *jwt_certificate.Certificate, jwksServer *httptest.Server, middlwareServer *httptest.Server) *jwtgo.RegisteredClaims
 
 type overrideToken func(*jwtgo.Token)
 
-func BuildTestClient(certificate *traefiktls.Certificate, clientSecret string, jwksServer *httptest.Server, middlwareServer *httptest.Server, tokenSigningMethod jwtgo.SigningMethod, requestPath string, overrideClient overrideClient, overrideClaims overrideClaims, overrideToken overrideToken) (client *http.Client, nonce string, issuedAt string, signedToken string, clientRequestUrl *url.URL, expectedRedirectorUrl *url.URL, err error) {
+func BuildTestClient(certificate *jwt_certificate.Certificate, clientSecret string, jwksServer *httptest.Server, middlwareServer *httptest.Server, tokenSigningMethod jwtgo.SigningMethod, requestPath string, overrideClient overrideClient, overrideClaims overrideClaims, overrideToken overrideToken) (client *http.Client, nonce string, issuedAt string, signedToken string, clientRequestUrl *url.URL, expectedRedirectorUrl *url.URL, err error) {
 	client = &http.Client{}
 	if overrideClient != nil {
 		overrideClient(client)
@@ -122,7 +121,7 @@ func MustNewRequest(method, urlStr string, body io.Reader) *http.Request {
 	return request
 }
 
-func RunTestAuthenticationWithConfigurationSuccess(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, tokenInjector jwt_flow.TokenInjector, configuration func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config) {
+func RunTestAuthenticationWithConfigurationSuccess(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, tokenInjector jwt_flow.TokenInjector, configuration func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers(certificatePath, certificatePath, configuration)
 	if err != nil {
 		panic(err)
@@ -145,7 +144,7 @@ func RunTestAuthenticationWithConfigurationSuccess(t *testing.T, signingMethod j
 	assert.EqualValues(t, `{"RequestUri":"/", "Referer":""}`+"\n", string(body), "they should be equal")
 }
 
-func RunTestAuthenticationWithConfigurationFailure(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, tokenInjector jwt_flow.TokenInjector, configuration func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config) {
+func RunTestAuthenticationWithConfigurationFailure(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, tokenInjector jwt_flow.TokenInjector, configuration func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers(certificatePath, certificatePath, configuration)
 	if err != nil {
 		panic(err)
@@ -164,7 +163,7 @@ func RunTestAuthenticationWithConfigurationFailure(t *testing.T, signingMethod j
 }
 
 func RunTestWithClientSecretSuccess(t *testing.T, clientSecret string, tokenInjector jwt_flow.TokenInjector) {
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.ClientSecret = clientSecret
 		return pluginConfig
 	}
@@ -191,7 +190,7 @@ func RunTestWithClientSecretSuccess(t *testing.T, clientSecret string, tokenInje
 }
 
 func RunTestWithClientSecretFailure(t *testing.T, serverClientSecret string, clientClientSecret string, tokenInjector jwt_flow.TokenInjector) {
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.ClientSecret = serverClientSecret
 		return pluginConfig
 	}
@@ -218,7 +217,7 @@ func RunTestWithClientSecretFailure(t *testing.T, serverClientSecret string, cli
 }
 
 func RunTestWithPublicKeySuccess(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, tokenInjector jwt_flow.TokenInjector) {
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		certContent, err := certificate.CertFile.Read()
 		if err != nil {
 			panic(err)
@@ -251,7 +250,7 @@ func RunTestWithPublicKeySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 }
 
 func RunTestWithPublicKeyFailure(t *testing.T, signingMethod jwtgo.SigningMethod, publicKeyRootPath string, privateKeyRootPath string, tokenInjector jwt_flow.TokenInjector) {
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		certContent, err := certificate.CertFile.Read()
 		if err != nil {
 			panic(err)
@@ -284,7 +283,7 @@ func RunTestWithPublicKeyFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 }
 
 func RunTestWithDiscoverySuccess(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, setIssuer bool, setOidcDiscoveryUri bool, setJwksUri bool, tokenInjector jwt_flow.TokenInjector) {
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		if setIssuer {
 			pluginConfig.Issuer = issuerUri.String()
 		}
@@ -321,7 +320,7 @@ func RunTestWithDiscoverySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 }
 
 func RunTestWithDiscoveryFailure(t *testing.T, signingMethod jwtgo.SigningMethod, serverCertificatePath string, clientCertificatePath string, setIssuer bool, setOidcDiscoveryUri bool, setJwksUri bool, tokenInjector jwt_flow.TokenInjector) {
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		if setIssuer {
 			pluginConfig.Issuer = issuerUri.String()
 		}

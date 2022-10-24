@@ -4,10 +4,10 @@ import (
 	"fmt"
 	jwtgo "github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/taliesins/traefik-plugin-oidc"
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
 	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"io"
 	"net/http"
 	"net/url"
@@ -167,7 +167,7 @@ func TestWithRS256UsingIssuerUriSuccess(t *testing.T) {
 }
 
 func TestWithNoAuthenticationAndNoSsoProvidedFailure(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		return pluginConfig
 	})
@@ -201,7 +201,7 @@ func TestWithNoAuthenticationAndNoSsoProvidedFailure(t *testing.T) {
 func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 	var expectedSsoAddressTemplate string
 
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -231,7 +231,7 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 }
 
 func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -271,7 +271,7 @@ func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {
 }
 
 func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -314,7 +314,7 @@ func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
 }
 
 func TestRedirectorWithInvalidCookieAndValidHashSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -361,7 +361,7 @@ func TestRedirectorWithInvalidCookieAndValidHashSuccess(t *testing.T) {
 }
 
 func TestRedirectorWithValidCookieAndValidHashAndUsingDiscoveryAddressSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.OidcDiscoveryAddress = oidcDiscoveryUri.String()
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
 		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
@@ -403,7 +403,7 @@ func TestRedirectorWithValidCookieAndValidHashAndUsingDiscoveryAddressSuccess(t 
 }
 
 func TestRedirectorWithValidPostAndValidHashSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -447,7 +447,7 @@ func TestRedirectorWithValidPostAndValidHashSuccess(t *testing.T) {
 func TestWithNoAuthenticationAndIgnorePathMatched(t *testing.T) {
 	//var expectedSsoAddressTemplate string
 
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -485,7 +485,7 @@ func TestWithNoAuthenticationAndIgnorePathMatched(t *testing.T) {
 func TestWithNoAuthenticationAndIgnorePathNotMatched(t *testing.T) {
 	var expectedSsoAddressTemplate string
 
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -580,7 +580,7 @@ func TestWithValidCredentialsAndAlgorithmRegexSuccess(t *testing.T) {
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.AlgorithmValidationRegex = "RS256"
 		return pluginConfig
@@ -593,7 +593,7 @@ func TestWithValidCredentialsAndAlgorithmRegexFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.AlgorithmValidationRegex = "NotMatched"
 
@@ -608,7 +608,7 @@ func TestWithValidCredentialsAndIssuerRegexSuccess(t *testing.T) {
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.IssuerValidationRegex = "https://.*"
 		return pluginConfig
@@ -621,7 +621,7 @@ func TestWithValidCredentialsAndIssuerRegexFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.IssuerValidationRegex = "NotMatched"
 
@@ -636,7 +636,7 @@ func TestWithValidCredentialsAndAudienceRegexSuccess(t *testing.T) {
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.AudienceValidationRegex = "aud"
 		return pluginConfig
@@ -649,7 +649,7 @@ func TestWithValidCredentialsAndAudienceRegexFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.AudienceValidationRegex = "NotMatched"
 
@@ -664,7 +664,7 @@ func TestWithValidCredentialsAndSubjectRegexSuccess(t *testing.T) {
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.SubjectValidationRegex = "sub"
 		return pluginConfig
@@ -677,7 +677,7 @@ func TestWithValidCredentialsAndSubjectRegexFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
 		pluginConfig.SubjectValidationRegex = "NotMatched"
 
@@ -692,7 +692,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimarySuccess(t *testing.
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.UseDynamicValidation = true
 		return pluginConfig
 	}
@@ -731,7 +731,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicSuccess(t *testing.
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.UseDynamicValidation = true
 		return pluginConfig
 	}
@@ -770,7 +770,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimaryFailure(t *testing.
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.UseDynamicValidation = true
 		return pluginConfig
 	}
@@ -810,7 +810,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicFailure(t *testing.
 	certificatePath := "fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
-	configuration := func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config {
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.UseDynamicValidation = true
 		return pluginConfig
 	}

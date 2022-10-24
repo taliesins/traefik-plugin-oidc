@@ -7,7 +7,6 @@ import (
 	"fmt"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"gopkg.in/square/go-jose.v2"
 	"io/ioutil"
 	"log"
@@ -188,7 +187,7 @@ func GetPrivateKeyFromFileOrContent(certificateFileOrContents string) (interface
 		}
 	}
 
-	pemData, err := traefiktls.FileOrContent(certificateFileOrContents).Read()
+	pemData, err := jwt_certificate.FileOrContent(certificateFileOrContents).Read()
 	if err != nil {
 		return nil, x509.UnknownSignatureAlgorithm, err
 	}
@@ -240,7 +239,7 @@ func GetPublicKeyFromFileOrContent(certificateFileOrContents string) (interface{
 		}
 	}
 
-	pemData, err := traefiktls.FileOrContent(certificateFileOrContents).Read()
+	pemData, err := jwt_certificate.FileOrContent(certificateFileOrContents).Read()
 	if err != nil {
 		return nil, x509.UnknownSignatureAlgorithm, err
 	}

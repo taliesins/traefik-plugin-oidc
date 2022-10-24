@@ -24,11 +24,15 @@ clean:
 	rm -rf ./vendor
 
 docker_build:
-	docker build . -t traefik-plugin-oidc:latest
+	docker build . -t taliesins/traefik-plugin-oidc:latest
 
 k8s:
 	helm repo add traefik https://helm.traefik.io/traefik
 	helm repo add cowboysysop https://cowboysysop.github.io/charts/
-	helm upgrade -i -f traefik-values.yaml traefik traefik/traefik
-	helm upgrade -i -f whoami-values.yaml whoami cowboysysop/whoami
-	kubectl apply -f ingress.yaml
+	helm repo add bitnami https://charts.bitnami.com/bitnami
+	helm dependency update charts/traefik-plugin-oidc-example
+	helm upgrade --install example charts/traefik-plugin-oidc-example -n example --create-namespace
+
+k8s_remove:
+	helm uninstall example -n example
+

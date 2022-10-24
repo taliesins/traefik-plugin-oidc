@@ -5,28 +5,28 @@ summary: 'Redirects to SSO if JWT token not present or invalid. JWT tokens are v
 iconPath: .assets/icon.png
 
 testData:
-	SsoRedirectUrlAddressTemplate:     "",
-	SsoRedirectUrlMacStrength:         "256",
-	SsoRedirectUrlMacClientSecret:     "password",
-	SsoRedirectUrlMacPrivateKey:       "",
-	SsoRedirectUrlMacAllowedClockSkew: "1800000000000",
+  SsoRedirectUrlAddressTemplate:     ""
+  SsoRedirectUrlMacStrength:         "256"
+  SsoRedirectUrlMacClientSecret:     "password"
+  SsoRedirectUrlMacPrivateKey:       ""
+  SsoRedirectUrlMacAllowedClockSkew: "1800000000000"
 
-	ClientSecret:         "password",
-	PublicKey:            "",
-	Issuer:               "",
-	Audience:             "",
-	JwksAddress:          "",
-	OidcDiscoveryAddress: "",
-	UseDynamicValidation: false,
+  ClientSecret:         "password"
+  PublicKey:            ""
+  Issuer:               ""
+  Audience:             ""
+  JwksAddress:          ""
+  OidcDiscoveryAddress: ""
+  UseDynamicValidation: false
 
-	AlgorithmValidationRegex: "",
-	AudienceValidationRegex:  "",
-	IssuerValidationRegex:    "",
-	SubjectValidationRegex:   "",
-	IdValidationRegex:        "",
-	TokenAllowedClockSkew:    "300000000000",
-	IgnorePathRegex:          "",
-	CredentialsOptional:      false,
-	ValidateOnOptions:        true,
+  AlgorithmValidationRegex: ""
+  AudienceValidationRegex:  ""
+  IssuerValidationRegex:    ""
+  SubjectValidationRegex:   ""
+  IdValidationRegex:        ""
+  TokenAllowedClockSkew:    "300000000000"
+  IgnorePathRegex:          ""
+  CredentialsOptional:      false
+  ValidateOnOptions:        true
 
 

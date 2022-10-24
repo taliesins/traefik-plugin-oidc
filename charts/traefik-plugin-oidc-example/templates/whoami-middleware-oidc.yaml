@@ -1,0 +1,33 @@
+{{ if and (and (eq .Values.traefik.enabled true) (eq .Values.keycloak.enabled true)) (eq .Values.whoami.enabled true) }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-whoami-middleware-oidc-keycloak
+spec:
+  plugin:
+    traefik-plugin-oidc:
+      SsoRedirectUrlAddressTemplate:     ""
+      SsoRedirectUrlMacStrength:         "256"
+      SsoRedirectUrlMacClientSecret:     "password"
+      SsoRedirectUrlMacPrivateKey:       ""
+      SsoRedirectUrlMacAllowedClockSkew: "1800000000000"
+
+      ClientSecret:         "my-special-client-secret"
+      PublicKey:            ""
+      Issuer:               ""
+      Audience:             ""
+      JwksAddress:          ""
+      OidcDiscoveryAddress: ""
+      UseDynamicValidation: false
+
+      AlgorithmValidationRegex: ""
+      AudienceValidationRegex:  ""
+      IssuerValidationRegex:    ""
+      SubjectValidationRegex:   ""
+      IdValidationRegex:        ""
+      TokenAllowedClockSkew:    "300000000000"
+      IgnorePathRegex:          ""
+      CredentialsOptional:      false
+      ValidateOnOptions:        true
+---
+{{ end }}

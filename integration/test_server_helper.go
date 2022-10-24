@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	pluginoidc "github.com/taliesins/traefik-plugin-oidc"
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"gopkg.in/square/go-jose.v2"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +15,7 @@ import (
 	"runtime"
 )
 
-func GetCertificateFromPath(publicKeyRootPath string, privateKeyRootPath string) (*traefiktls.Certificate, error) {
+func GetCertificateFromPath(publicKeyRootPath string, privateKeyRootPath string) (*jwt_certificate.Certificate, error) {
 	_, filename, _, _ := runtime.Caller(0)
 
 	publicKeyPath := fmt.Sprintf("%s.crt", path.Join(path.Dir(filename), publicKeyRootPath))
@@ -26,9 +25,9 @@ func GetCertificateFromPath(publicKeyRootPath string, privateKeyRootPath string)
 
 	privateKeyPath := fmt.Sprintf("%s.key", path.Join(path.Dir(filename), privateKeyRootPath))
 
-	certificate := &traefiktls.Certificate{
-		CertFile: traefiktls.FileOrContent(publicKeyPath),
-		KeyFile:  traefiktls.FileOrContent(privateKeyPath),
+	certificate := &jwt_certificate.Certificate{
+		CertFile: jwt_certificate.FileOrContent(publicKeyPath),
+		KeyFile:  jwt_certificate.FileOrContent(privateKeyPath),
 	}
 
 	if !certificate.CertFile.IsPath() {
@@ -42,7 +41,7 @@ func GetCertificateFromPath(publicKeyRootPath string, privateKeyRootPath string)
 	return certificate, nil
 }
 
-func getJsonWebset(certificate *traefiktls.Certificate) (*jose.JSONWebKeySet, error) {
+func getJsonWebset(certificate *jwt_certificate.Certificate) (*jose.JSONWebKeySet, error) {
 	publicKeyData, err := certificate.CertFile.Read()
 	if err != nil {
 		return nil, err
@@ -72,7 +71,7 @@ func getJsonWebset(certificate *traefiktls.Certificate) (*jose.JSONWebKeySet, er
 	return jsonWebKeySet, nil
 }
 
-func BuildTestJwkServer(publicKeyRootPath string, privateKeyRootPath string, oidcDiscoveryUriPath string, jwksUriPath string) (certificate *traefiktls.Certificate, jwksServer *httptest.Server, err error) {
+func BuildTestJwkServer(publicKeyRootPath string, privateKeyRootPath string, oidcDiscoveryUriPath string, jwksUriPath string) (certificate *jwt_certificate.Certificate, jwksServer *httptest.Server, err error) {
 	if publicKeyRootPath == "" {
 		publicKeyRootPath = "fixtures/signing/rsa"
 	}
@@ -118,7 +117,7 @@ func BuildTestJwkServer(publicKeyRootPath string, privateKeyRootPath string, oid
 	return certificate, jwksServer, nil
 }
 
-func buildPluginServer(cfg *pluginoidc.Config) (server *httptest.Server, err error) {
+func buildPluginServer(cfg *traefikPluginOidc.Config) (server *httptest.Server, err error) {
 	ctx := context.Background()
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := fmt.Fprintln(w, fmt.Sprintf(`{"RequestUri":"%s", "Referer":"%s"}`, r.URL.String(), r.Referer()))
@@ -127,7 +126,7 @@ func buildPluginServer(cfg *pluginoidc.Config) (server *httptest.Server, err err
 		}
 	})
 
-	handler, err := pluginoidc.New(ctx, next, cfg, "demo-plugin")
+	handler, err := traefikPluginOidc.New(ctx, next, cfg, "demo-plugin")
 	if err != nil {
 		return nil, err
 	}
@@ -137,9 +136,9 @@ func buildPluginServer(cfg *pluginoidc.Config) (server *httptest.Server, err err
 	return pluginServer, nil
 }
 
-type overridePluginConfiguration func(pluginConfig *pluginoidc.Config, certificate *traefiktls.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *pluginoidc.Config
+type overridePluginConfiguration func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config
 
-func BuildTestServers(publicKeyRootPath string, privateKeyRootPath string, overridePluginConfiguration overridePluginConfiguration) (certificate *traefiktls.Certificate, jwksServer *httptest.Server, pluginServer *httptest.Server, err error) {
+func BuildTestServers(publicKeyRootPath string, privateKeyRootPath string, overridePluginConfiguration overridePluginConfiguration) (certificate *jwt_certificate.Certificate, jwksServer *httptest.Server, pluginServer *httptest.Server, err error) {
 	oidcDiscoveryUriPath := "/.well-known/openid-configuration"
 	jwksUriPath := "/common/discovery/keys"
 
@@ -164,7 +163,7 @@ func BuildTestServers(publicKeyRootPath string, privateKeyRootPath string, overr
 		return nil, nil, nil, err
 	}
 
-	pluginConfiguration := pluginoidc.CreateConfig()
+	pluginConfiguration := traefikPluginOidc.CreateConfig()
 
 	if overridePluginConfiguration != nil {
 		overridePluginConfiguration(pluginConfiguration, certificate, ssoAddressTemplate, issuerUri, oidcDiscoveryUri, jwksUri)

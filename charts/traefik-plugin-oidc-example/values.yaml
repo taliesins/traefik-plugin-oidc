@@ -1,0 +1,149 @@
+############################## Traefik ##############################
+
+traefik:
+  enabled: true
+  image:
+    tag: v2.9.1
+  logs:
+    general:
+      # By default, the level is set to ERROR. Alternative logging levels are DEBUG, PANIC, FATAL, ERROR, WARN, and INFO.
+      level: DEBUG
+  globalArguments:
+    - "--global.checknewversion=false"
+    - "--global.sendanonymoususage=false"
+
+  additionalArguments:
+    - "--experimental.localPlugins.traefik-plugin-oidc.modulename=github.com/taliesins/traefik-plugin-oidc"
+
+  deployment:
+    kind: DaemonSet
+############################## start of add plugin to Traefik ##############################
+    additionalVolumes:
+      - name: plugins-local
+        emptyDir: { }
+
+    initContainers:
+      - name: traefik-plugin-oidc
+        image: taliesins/traefik-plugin-oidc:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: plugins-local
+            mountPath: /plugins-local
+
+  additionalVolumeMounts:
+    - name: plugins-local
+      mountPath: /plugins-local
+
+  experimental:
+    plugins:
+      enabled: true
+
+  providers:
+    # plugin:
+    #   traefik-plugin-oidc:
+    #     SsoRedirectUrlAddressTemplate:     ""
+    #     SsoRedirectUrlMacStrength:         "256"
+    #     SsoRedirectUrlMacClientSecret:     "password"
+    #     SsoRedirectUrlMacPrivateKey:       ""
+    #     SsoRedirectUrlMacAllowedClockSkew: "1800000000000"
+
+    #     ClientSecret:         "password"
+    #     PublicKey:            ""
+    #     Issuer:               ""
+    #     Audience:             ""
+    #     JwksAddress:          ""
+    #     OidcDiscoveryAddress: ""
+    #     UseDynamicValidation: false
+
+    #     AlgorithmValidationRegex: ""
+    #     AudienceValidationRegex:  ""
+    #     IssuerValidationRegex:    ""
+    #     SubjectValidationRegex:   ""
+    #     IdValidationRegex:        ""
+    #     TokenAllowedClockSkew:    "300000000000"
+    #     IgnorePathRegex:          ""
+    #     CredentialsOptional:      false
+    #     ValidateOnOptions:        true
+
+############################## end of add plugin to Traefik ##############################
+
+    kubernetesCRD:
+      enabled: true
+      allowCrossNamespace: true
+      allowExternalNameServices: true
+      allowEmptyServices: true
+      # ingressClass: traefik-internal
+      # labelSelector: environment=production,method=traefik
+      namespaces: []
+        # - "default"
+
+    kubernetesIngress:
+      enabled: true
+      allowExternalNameServices: true
+      allowEmptyServices: true
+      # ingressClass: traefik-internal
+      # labelSelector: environment=production,method=traefik
+      namespaces: []
+        # - "default"
+      # IP used for Kubernetes Ingress endpoints
+      publishedService:
+        enabled: false
+        # Published Kubernetes Service to copy status from. Format: namespace/servicename
+        # By default this Traefik service
+        # pathOverride: ""        
+        
+  ingressClass:
+    enabled: true
+    isDefaultClass: true
+
+  ingressRoute:
+    dashboard:
+      enabled: true    
+
+  ports:
+    traefik:
+      expose: true
+    websecure:
+      tls: 
+        enabled: true
+  
+############################## Keycloak ##############################
+
+keycloak:
+  enabled: true
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    hostname: keycloak.localhost
+  keycloakConfigCli:
+    enabled: false
+    config:
+      default:
+        file: files/default-realm.json
+    #config:    
+    # <realm name>:
+    #   inline:
+    #     realm: <realm name>
+    #     clients: []
+    # <realm name>:
+    #   file: <path>
+
+############################## WhoAmI ##############################
+
+whoami:
+  enabled: true
+  ingress:
+    enabled: true
+    annotations:
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-{{ .Release.Name }}-whoami-middleware-oidc-keycloak@kubernetescrd"
+    pathType: Prefix
+    hosts:
+      - host: whoami.localhost
+        paths:
+          - /
+    
+  # service:
+  #   targetPort: 8080
+  # extraArgs:
+  #   port: 8080

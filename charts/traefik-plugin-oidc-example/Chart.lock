@@ -1,0 +1,12 @@
+dependencies:
+- name: traefik
+  repository: https://helm.traefik.io/traefik/
+  version: 17.0.5
+- name: keycloak
+  repository: https://charts.bitnami.com/bitnami
+  version: 10.1.6
+- name: whoami
+  repository: https://cowboysysop.github.io/charts/
+  version: 2.7.0
+digest: sha256:738259c1b1c307dc094fcbb6130f8485a19d762b540c5e5d7febacf18bb20fe7
+generated: "2022-10-24T13:00:23.4462489+01:00"

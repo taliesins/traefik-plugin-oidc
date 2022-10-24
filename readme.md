@@ -1,6 +1,23 @@
+# Traefik Plugin OIDC
+
+This plugin will allow ingress endpoints to be protected with SSO by using OIDC. Plugin will check for a valid token and redirect to SSO if one is not detected. Once a valid token is detected traffic will continue normally to the ingress. 
+
+## Pre-requisites
+
+* Golang
+* Docker
+* Make
+  * For windows - https://gnuwin32.sourceforge.net/packages/make.htm & set PATH=%PATH%;C:\Program Files (x86)\GnuWin32\bin
+* yaegi
+  * From source code install - go install github.com/traefik/yaegi/cmd/yaegi@latest 
+
+Recommend using a tool like [OpenLens](https://github.com/MuhammedKalkan/OpenLens/releases) to see whats happening inside the cluster.
+
+
+
 This repository includes an example plugin, `demo`, for you to use as a reference for developing your own plugins.
 
-[![Build Status](https://github.com/traefik/plugindemo/workflows/Main/badge.svg?branch=master)](https://github.com/traefik/plugindemo/actions)
+[![Build Status](https://github.com/taliesins/traefik-plugin-oidc/workflows/Main/badge.svg?branch=master)](https://github.com/taliesins/traefik-plugin-oidc/actions)
 
 The existing plugins can be browsed into the [Plugin Catalog](https://plugins.traefik.io).
 
