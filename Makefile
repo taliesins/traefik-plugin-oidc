@@ -29,5 +29,6 @@ docker_build:
 k8s:
 	helm repo add traefik https://helm.traefik.io/traefik
 	helm repo add cowboysysop https://cowboysysop.github.io/charts/
-	helm install -f traefik-values.yaml traefik traefik/traefik
-	helm install -f whoami-values.yaml whoami cowboysysop/whoami
+	helm upgrade -i -f traefik-values.yaml traefik traefik/traefik
+	helm upgrade -i -f whoami-values.yaml whoami cowboysysop/whoami
+	kubectl apply -f ingress.yaml
