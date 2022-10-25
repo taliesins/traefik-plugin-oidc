@@ -41,7 +41,9 @@ func AddSync(w io.Writer) WriteSyncer {
 	case WriteSyncer:
 		return w
 	default:
-		return writerWrapper{w}
+		var wrapper WriteSyncer
+		wrapper = writerWrapper{w}
+		return wrapper
 	}
 }
 
@@ -60,9 +62,11 @@ func Lock(ws WriteSyncer) WriteSyncer {
 	return &lockedWriteSyncer{ws: ws}
 }
 
-func (s *lockedWriteSyncer) Write(bs []byte) (int, error) {
+func (s *lockedWriteSyncer) Write(bs []byte) (n int, err error) {
 	s.Lock()
-	n, err := s.ws.Write(bs)
+	var ioWriter io.Writer
+	ioWriter = s.ws
+	n, err = ioWriter.Write(bs)
 	s.Unlock()
 	return n, err
 }

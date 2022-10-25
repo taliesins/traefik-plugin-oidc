@@ -88,8 +88,10 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		return nil, err
 	}
 
-	logger.Debug("Starting the traefik-plugin-oidc")
-	logger.Sync()
+	/*
+		logger.Debug("Starting the traefik-plugin-oidc")
+		logger.Sync()
+	*/
 
 	// Parse config
 	if config.UseDynamicValidation == true && (config.Issuer == "" && config.IssuerValidationRegex == "") {

@@ -100,15 +100,20 @@ func (c consoleEncoder) EncodeEntry(ent Entry, fields []Field) (*buffer.Buffer, 
 			arr.AppendString(ent.Caller.Function)
 		}
 	}
-	var ioWriterType io.Writer
-	ioWriterType = line
 
+	var ioWriter io.Writer
+	ioWriter = line
 	for i := range arr.elems {
 		if i > 0 {
 			line.AppendString(c.ConsoleSeparator)
 		}
-		fmt.Fprint(ioWriterType, arr.elems[i])
+
+		_, err := fmt.Fprint(ioWriter, arr.elems[i])
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	putSliceEncoder(arr)
 
 	// Add the message itself.

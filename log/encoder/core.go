@@ -23,6 +23,7 @@ package encoder
 import (
 	"github.com/taliesins/traefik-plugin-oidc/log/level"
 	"github.com/taliesins/traefik-plugin-oidc/log/syncer"
+	"io"
 )
 
 // Core is a minimal, fast logger interface. It's designed for library authors
@@ -103,11 +104,16 @@ func (c *ioCore) Check(ent Entry, ce *CheckedEntry) *CheckedEntry {
 }
 
 func (c *ioCore) Write(ent Entry, fields []Field) error {
+
 	buf, err := c.enc.EncodeEntry(ent, fields)
 	if err != nil {
 		return err
 	}
-	_, err = c.out.Write(buf.Bytes())
+	if c.out != nil {
+		var ioWriter io.Writer
+		ioWriter = c.out
+		_, err = ioWriter.Write(buf.Bytes())
+	}
 	buf.Free()
 	if err != nil {
 		return err
@@ -121,6 +127,9 @@ func (c *ioCore) Write(ent Entry, fields []Field) error {
 }
 
 func (c *ioCore) Sync() error {
+	if c.out == nil {
+		return nil
+	}
 	return c.out.Sync()
 }
 
