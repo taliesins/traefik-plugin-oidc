@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/stretchr/testify v1.8.0
-	github.com/traefik/traefik/v2 v2.8.7
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
 

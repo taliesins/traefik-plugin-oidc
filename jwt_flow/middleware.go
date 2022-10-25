@@ -3,7 +3,7 @@ package jwt_flow
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
+	"github.com/taliesins/traefik-plugin-oidc/log"
 	"net/http"
 	"regexp"
 )
@@ -28,7 +28,7 @@ type JWTMiddleware struct {
 // an error message describing why validation failed.
 // Inside ValidateToken things like key and alg checking can happen.
 // In the default implementation we can add safe defaults for those.
-type ValidateToken func(logger *zap.Logger, context context.Context, token string) (interface{}, error)
+type ValidateToken func(logger *log.Logger, context context.Context, token string) (interface{}, error)
 
 // New constructs a new JWTMiddleware instance with the supplied options.
 // It requires a ValidateToken function to be passed in, so it can
@@ -52,11 +52,11 @@ func New(validateToken ValidateToken, opts ...Option) *JWTMiddleware {
 }
 
 // Flow is the orchestration flow that is used
-type Flow func(logger *zap.Logger, w http.ResponseWriter, r *http.Request)
+type Flow func(logger *log.Logger, w http.ResponseWriter, r *http.Request)
 
 // DefaultFlow is jwt token extraction, jwt token validation and then either success or failure handlers
 func (m *JWTMiddleware) DefaultFlow(next http.Handler) Flow {
-	return func(logger *zap.Logger, w http.ResponseWriter, r *http.Request) {
+	return func(logger *log.Logger, w http.ResponseWriter, r *http.Request) {
 		// If we don't validate on OPTIONS and this is OPTIONS
 		// then continue onto next without validating.
 		if !m.validateOnOptions && r.Method == http.MethodOptions {

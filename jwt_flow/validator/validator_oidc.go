@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/taliesins/traefik-plugin-oidc/jwks"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
-	"go.uber.org/zap"
+	"github.com/taliesins/traefik-plugin-oidc/log"
 	"gopkg.in/square/go-jose.v2/jwt"
 	"regexp"
 	"time"
@@ -27,7 +27,7 @@ func OidcTokenValidator(
 	useDynamicValidation bool,
 
 ) jwt_flow.ValidateToken {
-	return func(logger *zap.Logger, ctx context.Context, tokenString string) (interface{}, error) {
+	return func(logger *log.Logger, ctx context.Context, tokenString string) (interface{}, error) {
 		token, err := jwt.ParseSigned(tokenString)
 		if err != nil {
 			return nil, fmt.Errorf("could not parse the token: %w", err)
