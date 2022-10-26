@@ -4,65 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
+	"github.com/taliesins/traefik-plugin-oidc/test_utils"
+	"gopkg.in/square/go-jose.v2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path"
-
-	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	"gopkg.in/square/go-jose.v2"
 )
-
-func GetCertificateFromPath(publicKeyRootPath string, privateKeyRootPath string) (*jwt_certificate.Certificate, error) {
-	// _, filename, _, _ := runtime.Caller(0)
-
-	currentDirectory, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	// currentDirectoryName := filepath.Base(currentDirectory)
-	// if currentDirectoryName == "reflect" {
-	// 	// We are running the tests using yeagi so fix the path by getting it relative to the GOPATH
-	// 	ex, err := os.Executable()
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		panic(err)
-	// 	}
-
-	// 	goPath := filepath.Dir(filepath.Dir(ex))
-	// 	// fmt.Println("Go Path: " + err.Error())
-	// 	goPath, _ = os.Getwd()
-	// 	if os.PathSeparator == '\\' {
-	// 		currentDirectory = path.Join(goPath, "\\integration")
-	// 	} else {
-	// 		currentDirectory = path.Join(goPath, "integration")
-	// 	}
-	// }
-
-	publicKeyPath := fmt.Sprintf("%s.crt", path.Join(currentDirectory, publicKeyRootPath))
-	if _, err := os.Stat(publicKeyPath); os.IsNotExist(err) {
-		publicKeyPath = fmt.Sprintf("%s.cert", path.Join(currentDirectory, publicKeyRootPath))
-	}
-
-	privateKeyPath := fmt.Sprintf("%s.key", path.Join(currentDirectory, privateKeyRootPath))
-
-	certificate := &jwt_certificate.Certificate{
-		CertFile: jwt_certificate.FileOrContent(publicKeyPath),
-		KeyFile:  jwt_certificate.FileOrContent(privateKeyPath),
-	}
-
-	if !certificate.CertFile.IsPath() {
-		return nil, fmt.Errorf("CertFile path is invalid: %s", string(certificate.CertFile))
-	}
-
-	if !certificate.KeyFile.IsPath() {
-		return nil, fmt.Errorf("KeyFile path is invalid: %s", string(certificate.KeyFile))
-	}
-
-	return certificate, nil
-}
 
 func getJsonWebset(certificate *jwt_certificate.Certificate) (*jose.JSONWebKeySet, error) {
 	publicKeyData, err := certificate.CertFile.Read()
@@ -96,14 +45,14 @@ func getJsonWebset(certificate *jwt_certificate.Certificate) (*jose.JSONWebKeySe
 
 func BuildTestJwkServer(publicKeyRootPath string, privateKeyRootPath string, oidcDiscoveryUriPath string, jwksUriPath string) (certificate *jwt_certificate.Certificate, jwksServer *httptest.Server, err error) {
 	if publicKeyRootPath == "" {
-		publicKeyRootPath = "fixtures/signing/rsa"
+		publicKeyRootPath = "integration/fixtures/signing/rsa"
 	}
 
 	if privateKeyRootPath == "" {
-		privateKeyRootPath = "fixtures/signing/rsa"
+		privateKeyRootPath = "integration/fixtures/signing/rsa"
 	}
 
-	certificate, err = GetCertificateFromPath(publicKeyRootPath, privateKeyRootPath)
+	certificate, err = test_utils.GetCertificateFromPath(publicKeyRootPath, privateKeyRootPath)
 	if err != nil {
 		return nil, nil, err
 	}
