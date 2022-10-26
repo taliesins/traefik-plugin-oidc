@@ -117,7 +117,7 @@ keycloak:
     enabled: true
     hostname: keycloak.localhost
   keycloakConfigCli:
-    enabled: false
+    enabled: enable
     config:
       default:
         file: files/default-realm.json

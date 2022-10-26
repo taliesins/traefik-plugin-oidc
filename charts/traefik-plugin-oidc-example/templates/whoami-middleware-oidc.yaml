@@ -6,18 +6,18 @@ metadata:
 spec:
   plugin:
     traefik-plugin-oidc:
-      SsoRedirectUrlAddressTemplate:     ""
+      SsoRedirectUrlAddressTemplate:     "http://http://keycloakhost:keycloakport/auth/realms/{realm}/.well-known/openid-configuration/traefik_k8s_test.onmicrosoft.com/oauth2/v2.0/authorize?p=B2C_1A_signup_signin&client_id=1234f2b2-9fe3-1234-11a6-f123e76e3843&nonce={{.Nonce}}&redirect_uri={{.CallbackUrl}}&state={{.State}}&scope=openid&response_type=id_token&prompt=login"
       SsoRedirectUrlMacStrength:         "256"
       SsoRedirectUrlMacClientSecret:     "password"
       SsoRedirectUrlMacPrivateKey:       ""
       SsoRedirectUrlMacAllowedClockSkew: "1800000000000"
 
-      ClientSecret:         "my-special-client-secret"
+      ClientSecret:         ""
       PublicKey:            ""
       Issuer:               ""
       Audience:             ""
       JwksAddress:          ""
-      OidcDiscoveryAddress: ""
+      OidcDiscoveryAddress: "http://keycloak.localhost/auth/realms/default/.well-known/openid-configuration"
       UseDynamicValidation: false
 
       AlgorithmValidationRegex: ""

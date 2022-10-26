@@ -5,8 +5,8 @@ import (
 	"fmt"
 	jwtgo "github.com/golang-jwt/jwt/v4"
 	guuid "github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/assert"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
 	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
@@ -136,11 +136,11 @@ func RunTestAuthenticationWithConfigurationSuccess(t *testing.T, signingMethod j
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.EqualValues(t, `{"RequestUri":"/", "Referer":""}`+"\n", string(body), "they should be equal")
 }
 
@@ -158,7 +158,7 @@ func RunTestAuthenticationWithConfigurationFailure(t *testing.T, signingMethod j
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 }
 
@@ -181,11 +181,11 @@ func RunTestWithClientSecretSuccess(t *testing.T, clientSecret string, tokenInje
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Regexp(t, `{"RequestUri":"\/.*", "Referer":""}\n`, string(body), "they should be equal")
 }
 
@@ -208,11 +208,11 @@ func RunTestWithClientSecretFailure(t *testing.T, serverClientSecret string, cli
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.NotEqual(t, `{"RequestUri":"/", "Referer":""}`+"\n", string(body), "they should not be equal")
 }
 
@@ -241,11 +241,11 @@ func RunTestWithPublicKeySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Regexp(t, `{"RequestUri":"\/.*", "Referer":""}\n`, string(body), "they should be equal")
 }
 
@@ -274,11 +274,11 @@ func RunTestWithPublicKeyFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.NotEqual(t, `{"RequestUri":"/", "Referer":""}`+"\n", string(body), "they should not be equal")
 }
 
@@ -311,11 +311,11 @@ func RunTestWithDiscoverySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.EqualValues(t, `{"RequestUri":"/", "Referer":""}`+"\n", string(body), "they should be equal")
 }
 
@@ -355,10 +355,10 @@ func RunTestWithDiscoveryFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.NotEqual(t, `{"RequestUri":"/", "Referer":""}`+"\n", string(body), "they should not be equal")
 }

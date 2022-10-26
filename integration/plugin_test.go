@@ -3,8 +3,8 @@ package integration
 import (
 	"fmt"
 	jwtgo "github.com/golang-jwt/jwt/v4"
-	"github.com/stretchr/testify/assert"
 	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/assert"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
 	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
@@ -187,12 +187,12 @@ func TestWithNoAuthenticationAndNoSsoProvidedFailure(t *testing.T) {
 
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "response status code")
 
 	body, err := io.ReadAll(res.Body)
 	expectedBody := "\n"
-	assert.EqualValues(t, expectedBody, string(body), "they should be equal")
+	assert.EqualValues(t, expectedBody, string(body), "response body")
 }
 
 //nonce specified by client
@@ -226,7 +226,7 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	AssertRedirectPageIsReturned(t, res, expectedSsoAddressTemplate)
 }
 
@@ -259,15 +259,15 @@ func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {
 	req := MustNewRequest(http.MethodGet, expectedReturnUrl, nil)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "response status code")
 
 	body, err := io.ReadAll(res.Body)
 
 	//	expectedBodyTemplate := "\n<!DOCTYPE html><html><head><title></title></head><body>\n<script>\nfunction getBookMarkParameterByName(name, url) {\n    if (!url) url = window.location.hash;\n    name = name.replace(/[\\[\\]]/g, \"\\\\$&\");\n    var regex = new RegExp(\"[#&?]\" + name + \"(=([^&#]*)|&|#|$)\"), results = regex.exec(url);\n    if (!results) return null;\n    if (!results[2]) return '';\n    return decodeURIComponent(results[2].replace(/\\+/g, \" \"));\n}\n\nstate = getBookMarkParameterByName('state');\nif (state) {\n\tid_token = getBookMarkParameterByName('id_token');\n\tif (id_token) {\n\n\t\tdocument.cookie = 'id_token=' + id_token + '; domain=' + document.domain + '; path=/; secure';\n\t\twindow.location.replace('%s?' + state);\n\n\t}\n}\n</script>\nPlease change the '#' in the url to '&' and goto link\n</body></html>\n\n"
 	expectedBodyTemplate := "\n<!DOCTYPE html><html><head><title></title></head><body>\n<script>\nfunction getBookMarkParameterByName(name, url) {\n    if (!url) url = window.location.hash;\n    name = name.replace(/[\\[\\]]/g, \"\\\\$&\");\n    var regex = new RegExp(\"[#&?]\" + name + \"(=([^&#]*)|&|#|$)\"), results = regex.exec(url);\n    if (!results) return null;\n    if (!results[2]) return '';\n    return decodeURIComponent(results[2].replace(/\\+/g, \" \"));\n}\n\nfunction post(path, params, method) {\n    method = method || \"post\"; // Set method to post by default if not specified.\n    // The rest of this code assumes you are not using a library.\n    // It can be made less wordy if you use one.\n    var form = document.createElement(\"form\");\n    form.setAttribute(\"method\", method);\n    form.setAttribute(\"action\", path);\n    for(var key in params) {\n        if(params.hasOwnProperty(key)) {\n            var hiddenField = document.createElement(\"input\");\n            hiddenField.setAttribute(\"type\", \"hidden\");\n            hiddenField.setAttribute(\"name\", key);\n            hiddenField.setAttribute(\"value\", params[key]);\n            form.appendChild(hiddenField);\n        }\n    }\n    document.body.appendChild(form);\n    form.submit();\n}\n\nstate = getBookMarkParameterByName('state');\nif (state) {\n\tid_token = getBookMarkParameterByName('id_token');\n\tif (id_token) {\n\n\t\tpost('%s?' + state, {id_token: id_token});\n\n\t}\n}\n</script>\nPlease change the '#' in the url to '&' and goto link\n</body></html>\n\n"
 
-	assert.EqualValues(t, fmt.Sprintf(expectedBodyTemplate, expectedRedirectorUrl), string(body), "Should be equal")
+	assert.EqualValues(t, fmt.Sprintf(expectedBodyTemplate, expectedRedirectorUrl), string(body), "response body")
 }
 
 func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
@@ -297,20 +297,20 @@ func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
 
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
-	assert.EqualValues(t, http.StatusSeeOther, res.StatusCode, "they should be equal")
+	assert.NoError(t, err)
+	assert.EqualValues(t, http.StatusSeeOther, res.StatusCode, "response status code")
 
 	cookies := res.Cookies()
-	assert.Len(t, cookies, 1, "At least one cookie should have been returned")
+	assert.Len(t, cookies, 1, "cookie")
 
 	if len(cookies) == 1 {
-		assert.EqualValues(t, sso_redirector.SessionCookieName, cookies[0].Name, "Session cookie for id_token not present")
-		assert.True(t, cookies[0].Expires.Equal(time.Time{}), "Session cookie should not have this set")
-		assert.True(t, cookies[0].MaxAge == 0, "Session cookie should not have this set")
+		assert.EqualValues(t, sso_redirector.SessionCookieName, cookies[0].Name, "session cookie for id_token")
+		assert.True(t, cookies[0].Expires.Equal(time.Time{}), "session cookie expiry")
+		assert.True(t, cookies[0].MaxAge == 0, "session cookie max age")
 	}
 
 	body, err := io.ReadAll(res.Body)
-	assert.EqualValues(t, fmt.Sprintf("<a href=\"%s\">See Other</a>.\n\n", clientRequestUrl), string(body), "Should be equal")
+	assert.EqualValues(t, fmt.Sprintf("<a href=\"%s\">See Other</a>.\n\n", clientRequestUrl), string(body), "response body")
 }
 
 func TestRedirectorWithInvalidCookieAndValidHashSuccess(t *testing.T) {
@@ -344,16 +344,16 @@ func TestRedirectorWithInvalidCookieAndValidHashSuccess(t *testing.T) {
 
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
-	assert.EqualValues(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
+	assert.NoError(t, err)
+	assert.EqualValues(t, http.StatusUnauthorized, res.StatusCode, "response status code")
 
 	cookies := res.Cookies()
-	assert.Len(t, cookies, 1, "At least one cookie should have been returned")
+	assert.Len(t, cookies, 1, "cookie")
 
 	if len(cookies) == 1 {
-		assert.EqualValues(t, sso_redirector.SessionCookieName, cookies[0].Name, "Session cookie for id_token not present")
-		assert.True(t, cookies[0].Expires.Before(time.Now().UTC()), "Session cookie should be expired")
-		assert.True(t, cookies[0].MaxAge < 0, "Session cookie should be expired")
+		assert.EqualValues(t, sso_redirector.SessionCookieName, cookies[0].Name, "session cookie for id_token")
+		assert.True(t, cookies[0].Expires.Before(time.Now().UTC()), "session cookie should be expired")
+		assert.True(t, cookies[0].MaxAge < 0, "session cookie should be expired")
 	}
 
 	body, err := io.ReadAll(res.Body)
@@ -386,14 +386,14 @@ func TestRedirectorWithValidCookieAndValidHashAndUsingDiscoveryAddressSuccess(t 
 
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
-	assert.EqualValues(t, http.StatusSeeOther, res.StatusCode, "they should be equal")
+	assert.NoError(t, err)
+	assert.EqualValues(t, http.StatusSeeOther, res.StatusCode, "response status code")
 
 	cookies := res.Cookies()
-	assert.Len(t, cookies, 1, "At least one cookie should have been returned")
+	assert.Len(t, cookies, 1, "cookie")
 
 	if len(cookies) == 1 {
-		assert.EqualValues(t, sso_redirector.SessionCookieName, cookies[0].Name, "Session cookie for id_token not present")
+		assert.EqualValues(t, sso_redirector.SessionCookieName, cookies[0].Name, "Session cookie for id_token")
 		assert.True(t, cookies[0].Expires.Equal(time.Time{}), "Session cookie should not have this set")
 		assert.True(t, cookies[0].MaxAge == 0, "Session cookie should not have this set")
 	}
@@ -428,11 +428,11 @@ func TestRedirectorWithValidPostAndValidHashSuccess(t *testing.T) {
 
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
-	assert.EqualValues(t, http.StatusSeeOther, res.StatusCode, "they should be equal")
+	assert.NoError(t, err)
+	assert.EqualValues(t, http.StatusSeeOther, res.StatusCode, "response status code")
 
 	cookies := res.Cookies()
-	assert.Len(t, cookies, 1, "At least one cookie should have been returned")
+	assert.Len(t, cookies, 1, "cookie")
 
 	if len(cookies) == 1 {
 		assert.EqualValues(t, sso_redirector.SessionCookieName, cookies[0].Name, "Session cookie for id_token not present")
@@ -473,7 +473,7 @@ func TestWithNoAuthenticationAndIgnorePathMatched(t *testing.T) {
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
@@ -510,13 +510,13 @@ func TestWithNoAuthenticationAndIgnorePathNotMatched(t *testing.T) {
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 
 	AssertRedirectPageIsReturned(t, res, expectedSsoAddressTemplate)
 }
 
 func AssertRedirectPageIsReturned(t *testing.T, res *http.Response, expectedSsoAddressTemplate string) {
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "response status code")
 
 	body, err := io.ReadAll(res.Body)
 
@@ -565,14 +565,14 @@ func AssertRedirectPageIsReturned(t *testing.T, res *http.Response, expectedSsoA
 		panic(err)
 	}
 
-	assert.NotEmpty(t, nonceMatch, "nonce should be specified by the server")
-	assert.EqualValues(t, url.QueryEscape(expectedRedirectUri.String()), redirectUriMatch, "redirect_uri should be specified")
-	assert.NotEqual(t, url.QueryEscape(""), stateMatch, "state should be specified")
-	assert.NotEqual(t, url.QueryEscape(""), hash, "hash should be specified")
+	assert.NotEmpty(t, nonceMatch, "nonceMatch")
+	assert.EqualValues(t, url.QueryEscape(expectedRedirectUri.String()), redirectUriMatch, "redirect_uri")
+	assert.NotEmpty(t, stateMatch, "stateMatch")
+	assert.NotEmpty(t, hash, "hash")
 	assert.True(t, time.Now().UTC().Before(iat.Add(allowedClockSkew)), "iat is larger then expected")
 	assert.True(t, time.Now().UTC().After(iat.Add(-1*(allowedClockSkew))), "iat is smaller then expected")
-	assert.EqualValues(t, nonceMatch, nonce, "nonce should match")
-	assert.NotEqual(t, url.QueryEscape(""), redirectUri, "redirectUri should be specified")
+	assert.EqualValues(t, nonceMatch, nonce, "nonce")
+	assert.NotEmpty(t, redirectUri, "redirectUri")
 }
 
 func TestWithValidCredentialsAndAlgorithmRegexSuccess(t *testing.T) {
@@ -718,11 +718,11 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimarySuccess(t *testing.
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.EqualValues(t, `{"RequestUri":"/", "Referer":""}`+"\n", string(body), "they should be equal")
 }
 
@@ -757,11 +757,11 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicSuccess(t *testing.
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := io.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	assert.NoError(t, err)
 	assert.EqualValues(t, `{"RequestUri":"/", "Referer":""}`+"\n", string(body), "they should be equal")
 }
 
@@ -801,8 +801,8 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimaryFailure(t *testing.
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "response status code")
 }
 
 func TestWithValidCredentialsAndDynamicValidationMatchDynamicFailure(t *testing.T) {
@@ -841,6 +841,6 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicFailure(t *testing.
 	tokenInjector(req, signedToken)
 	res, err := client.Do(req)
 
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "response status code")
 }

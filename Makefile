@@ -33,6 +33,9 @@ k8s:
 	helm dependency update charts/traefik-plugin-oidc-example
 	helm upgrade --install example charts/traefik-plugin-oidc-example -n example --create-namespace
 
+k8s_uninstall:
+	helm uninstall example -n example
+
 k8s_remove:
 	helm uninstall example -n example
 

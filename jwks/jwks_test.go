@@ -1,9 +1,8 @@
 package jwks
 
 import (
+	"github.com/taliesins/traefik-plugin-oidc/assert"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDownloadOpenIdConnectDiscoveryUriSuccess(t *testing.T) {
@@ -11,7 +10,7 @@ func TestDownloadOpenIdConnectDiscoveryUriSuccess(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	assert.NotEmpty(t, jwksUri, "Should be the uri where jwks is")
+	assert.NotEmpty(t, jwksUri, "jwks uri")
 }
 
 func TestDownloadJwksUriSuccess(t *testing.T) {
@@ -19,5 +18,5 @@ func TestDownloadJwksUriSuccess(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	assert.NotEmpty(t, jwks, "Should be a jwks")
+	assert.NotEmpty(t, jwks, "jwks")
 }
