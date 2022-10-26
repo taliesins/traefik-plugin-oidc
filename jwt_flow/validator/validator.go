@@ -3,9 +3,13 @@ package validator
 import (
 	"context"
 	"fmt"
+
 	"github.com/pkg/errors"
-	"gopkg.in/square/go-jose.v2/jwt"
+
+	// "gopkg.in/square/go-jose.v2/jwt"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // Signature algorithms
@@ -29,7 +33,7 @@ const (
 type Validator struct {
 	keyFunc            func(context.Context) (interface{}, error) // Required.
 	signatureAlgorithm SignatureAlgorithm                         // Required.
-	expectedClaims     jwt.Expected                               // Internal.
+	expectedClaims     jwt.Claims                                 // Internal.
 	customClaims       func() CustomClaims                        // Optional.
 	allowedClockSkew   time.Duration                              // Optional.
 }
@@ -78,7 +82,7 @@ func New(
 	v := &Validator{
 		keyFunc:            keyFunc,
 		signatureAlgorithm: signatureAlgorithm,
-		expectedClaims: jwt.Expected{
+		expectedClaims: jwt.RegisteredClaims{
 			Issuer:   issuerURL,
 			Audience: audience,
 		},
@@ -93,37 +97,38 @@ func New(
 
 // ValidateToken validates the passed in JWT using the jose v2 package.
 func (v *Validator) ValidateToken(ctx context.Context, tokenString string) (interface{}, error) {
-	token, err := jwt.ParseSigned(tokenString)
+	//TODO
+	token, err := jwt.Parse(tokenString, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse the token: %w", err)
 	}
-
-	if string(v.signatureAlgorithm) != token.Headers[0].Algorithm {
+	if string(v.signatureAlgorithm) != token.Header["Algorithm"] {
 		return nil, fmt.Errorf(
 			"expected %q signing algorithm but token specified %q",
 			v.signatureAlgorithm,
-			token.Headers[0].Algorithm,
+			token.Header["Algorithm"],
 		)
 	}
 
-	key, err := v.keyFunc(ctx)
+	_, err = v.keyFunc(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting the keys from the key func: %w", err)
 	}
 
-	claimDest := []interface{}{&jwt.Claims{}}
+	// claimDest := []interface{}{&jwt.Claims}
+	claimDest := []interface{}{}
+
 	if v.customClaims != nil {
 		claimDest = append(claimDest, v.customClaims())
 	}
 
-	if err = token.Claims(key, claimDest...); err != nil {
+	if err = token.Claims.Valid(); err != nil {
 		return nil, fmt.Errorf("could not get token claims: %w", err)
 	}
 
-	registeredClaims := *claimDest[0].(*jwt.Claims)
-	expectedClaims := v.expectedClaims
-	expectedClaims.Time = time.Now()
-	if err = registeredClaims.ValidateWithLeeway(expectedClaims, v.allowedClockSkew); err != nil {
+	registeredClaims := *claimDest[0].(*jwt.RegisteredClaims)
+	//TODO
+	if err = registeredClaims.Valid(); err != nil {
 		return nil, fmt.Errorf("expected claims not validated: %w", err)
 	}
 
@@ -136,16 +141,16 @@ func (v *Validator) ValidateToken(ctx context.Context, tokenString string) (inte
 		},
 	}
 
-	if registeredClaims.Expiry != nil {
-		validatedClaims.RegisteredClaims.Expiry = registeredClaims.Expiry.Time().Unix()
+	if registeredClaims.ExpiresAt != nil {
+		validatedClaims.RegisteredClaims.Expiry = registeredClaims.ExpiresAt.Unix()
 	}
 
 	if registeredClaims.NotBefore != nil {
-		validatedClaims.RegisteredClaims.NotBefore = registeredClaims.NotBefore.Time().Unix()
+		validatedClaims.RegisteredClaims.NotBefore = registeredClaims.NotBefore.Unix()
 	}
 
 	if registeredClaims.IssuedAt != nil {
-		validatedClaims.RegisteredClaims.IssuedAt = registeredClaims.IssuedAt.Time().Unix()
+		validatedClaims.RegisteredClaims.IssuedAt = registeredClaims.IssuedAt.Unix()
 	}
 
 	if v.customClaims != nil {

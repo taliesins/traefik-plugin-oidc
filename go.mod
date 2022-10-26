@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
-	gopkg.in/square/go-jose.v2 v2.6.0
+	github.com/golang-jwt/jwt/v4 v4.4.2
 )
 
 require (
