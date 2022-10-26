@@ -7,10 +7,9 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	jwtgo "github.com/taliesins/traefik-plugin-oidc/jwt"
 	"net/url"
 	"reflect"
-
-	jwtgo "github.com/golang-jwt/jwt/v4"
 )
 
 func GetPrivateKey(privateKeyData []byte) (privateKey interface{}, err error) {

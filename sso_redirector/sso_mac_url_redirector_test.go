@@ -1,6 +1,7 @@
 package sso_redirector
 
 import (
+	"fmt"
 	"github.com/taliesins/traefik-plugin-oidc/assert"
 	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 	"net/url"
@@ -48,11 +49,16 @@ func TestAddHashAndRemoveHashUsingPrivateKeyOnlySuccess(t *testing.T) {
 
 	privateKey, err := test_utils.GetPrivateKeyFromPath("integration/fixtures/https/snitest.com", "integration/fixtures/https/snitest.com")
 	assert.NoError(t, err)
+	fmt.Printf("got privateKey no error\n")
+
 	macStrength := MacStrength_256
 
 	err = AddMacHashToUrl(testUrl, privateKey, macStrength)
 	assert.NoError(t, err)
+	fmt.Printf("got AddMacHashToUrl no error\n")
 
 	err = VerifyAndStripMacHashFromUrl(testUrl, privateKey, macStrength)
 	assert.NoError(t, err)
+
+	fmt.Printf("got VerifyAndStripMacHashFromUrl no error\n")
 }
