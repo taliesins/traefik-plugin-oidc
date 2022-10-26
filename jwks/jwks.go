@@ -1,21 +1,17 @@
 package jwks
 
 import (
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
-
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 )
 
 var lruCache *lru.Cache
@@ -119,7 +115,7 @@ func GetPublicKeyFromIssuerUri(kid string, issuerUri string) (interface{}, x509.
 	return GetPublicKeyFromOpenIdConnectDiscoveryUri(kid, openIdConnectDiscoveryUri.String())
 }
 
-func DownloadJwksUri(jwksUri string) (*JSONWebKeySet, error) {
+func DownloadJwksUri(jwksUri string) (*jwt_certificate.JSONWebKeySet, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -138,7 +134,7 @@ func DownloadJwksUri(jwksUri string) (*JSONWebKeySet, error) {
 		return nil, err
 	}
 
-	jwks := &JSONWebKeySet{}
+	jwks := &jwt_certificate.JSONWebKeySet{}
 	err = json.Unmarshal(body, jwks)
 	if err != nil {
 		return nil, err
@@ -216,7 +212,7 @@ func GetPrivateKeyFromFileOrContent(certificateFileOrContents string) (interface
 	return privateKey, x509.UnknownSignatureAlgorithm, nil
 }
 
-func GetPublicKeyFromJwks(jwks *JSONWebKeySet, kid string) (interface{}, x509.SignatureAlgorithm, error) {
+func GetPublicKeyFromJwks(jwks *jwt_certificate.JSONWebKeySet, kid string) (interface{}, x509.SignatureAlgorithm, error) {
 	for _, key := range jwks.Keys {
 		if key.KeyID == kid {
 			if !key.Valid() {
@@ -272,66 +268,4 @@ func GetPublicKeyFromFileOrContent(certificateFileOrContents string) (interface{
 	})
 
 	return publicKey, signingAlgorithm, nil
-}
-
-// JSONWebKeySet represents a JWK Set object.
-type JSONWebKeySet struct {
-	Keys []JSONWebKey `json:"keys"`
-}
-
-// JSONWebKey represents a public or private key in JWK format.
-type JSONWebKey struct {
-	// Cryptographic key, can be a symmetric or asymmetric key.
-	Key interface{}
-	// Key identifier, parsed from `kid` header.
-	KeyID string
-	// Key algorithm, parsed from `alg` header.
-	Algorithm string
-	// Key use, parsed from `use` header.
-	Use string
-
-	// X.509 certificate chain, parsed from `x5c` header.
-	Certificates []*x509.Certificate
-	// X.509 certificate URL, parsed from `x5u` header.
-	CertificatesURL *url.URL
-	// X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.
-	CertificateThumbprintSHA1 []byte
-	// X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.
-	CertificateThumbprintSHA256 []byte
-}
-
-// Valid checks that the key contains the expected parameters.
-func (k *JSONWebKey) Valid() bool {
-	if k.Key == nil {
-		return false
-	}
-	switch key := k.Key.(type) {
-	case *ecdsa.PublicKey:
-		if key.Curve == nil || key.X == nil || key.Y == nil {
-			return false
-		}
-	case *ecdsa.PrivateKey:
-		if key.Curve == nil || key.X == nil || key.Y == nil || key.D == nil {
-			return false
-		}
-	case *rsa.PublicKey:
-		if key.N == nil || key.E == 0 {
-			return false
-		}
-	case *rsa.PrivateKey:
-		if key.N == nil || key.E == 0 || key.D == nil || len(key.Primes) < 2 {
-			return false
-		}
-	case ed25519.PublicKey:
-		if len(key) != 32 {
-			return false
-		}
-	case ed25519.PrivateKey:
-		if len(key) != 64 {
-			return false
-		}
-	default:
-		return false
-	}
-	return true
 }
