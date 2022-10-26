@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/jwks"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 	"net/http"
@@ -13,7 +12,7 @@ import (
 	"net/url"
 )
 
-func getJsonWebset(certificate *jwt_certificate.Certificate) (*jwks.JSONWebKeySet, error) {
+func getJsonWebset(certificate *jwt_certificate.Certificate) (*jwt_certificate.JSONWebKeySet, error) {
 	publicKeyData, err := certificate.CertFile.Read()
 	if err != nil {
 		return nil, err
@@ -29,8 +28,8 @@ func getJsonWebset(certificate *jwt_certificate.Certificate) (*jwks.JSONWebKeySe
 		return nil, err
 	}
 
-	jsonWebKeySet := &jwks.JSONWebKeySet{
-		Keys: []jwks.JSONWebKey{
+	jsonWebKeySet := &jwt_certificate.JSONWebKeySet{
+		Keys: []jwt_certificate.JSONWebKey{
 			{
 				Key:       publicKey,
 				KeyID:     "0",

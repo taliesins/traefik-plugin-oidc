@@ -227,3 +227,27 @@ func (k *JSONWebKey) Valid() bool {
 	}
 	return true
 }
+
+// JSONWebToken represents a JSON Web Token (as specified in RFC7519).
+type JSONWebToken struct {
+	payload           func(k interface{}) ([]byte, error)
+	unverifiedPayload func() []byte
+	Headers           []Header
+}
+
+// Header represents the read-only JOSE header for JWE/JWS objects.
+type Header struct {
+	KeyID      string
+	JSONWebKey *JSONWebKey
+	Algorithm  string
+	Nonce      string
+
+	// Unverified certificate chain parsed from x5c header.
+	certificates []*x509.Certificate
+
+	// Any headers not recognised above get unmarshalled
+	// from JSON in a generic manner and placed in this map.
+	ExtraHeaders map[HeaderKey]interface{}
+}
+
+type HeaderKey string
