@@ -12,18 +12,37 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 )
 
 func GetCertificateFromPath(publicKeyRootPath string, privateKeyRootPath string) (*jwt_certificate.Certificate, error) {
 	_, filename, _, _ := runtime.Caller(0)
 
-	publicKeyPath := fmt.Sprintf("%s.crt", path.Join(path.Dir(filename), publicKeyRootPath))
-	if _, err := os.Stat(publicKeyPath); os.IsNotExist(err) {
-		publicKeyPath = fmt.Sprintf("%s.cert", path.Join(path.Dir(filename), publicKeyRootPath))
+	currentDirectory := path.Dir(filename)
+	currentDirectoryName := filepath.Base(currentDirectory)
+	if currentDirectoryName == "reflect" {
+		// We are running the tests using yeagi so fix the path by getting it relative to the GOPATH
+		ex, err := os.Executable()
+		if err != nil {
+			panic(err)
+		}
+
+		goPath := filepath.Dir(filepath.Dir(ex))
+
+		if os.PathSeparator == '\\' {
+			currentDirectory = path.Join(goPath, "src\\github.com\\taliesins\\traefik-plugin-oidc\\integration")
+		} else {
+			currentDirectory = path.Join(goPath, "src/github.com/taliesins/traefik-plugin-oidc/integration")
+		}
 	}
 
-	privateKeyPath := fmt.Sprintf("%s.key", path.Join(path.Dir(filename), privateKeyRootPath))
+	publicKeyPath := fmt.Sprintf("%s.crt", path.Join(currentDirectory, publicKeyRootPath))
+	if _, err := os.Stat(publicKeyPath); os.IsNotExist(err) {
+		publicKeyPath = fmt.Sprintf("%s.cert", path.Join(currentDirectory, publicKeyRootPath))
+	}
+
+	privateKeyPath := fmt.Sprintf("%s.key", path.Join(currentDirectory, privateKeyRootPath))
 
 	certificate := &jwt_certificate.Certificate{
 		CertFile: jwt_certificate.FileOrContent(publicKeyPath),
