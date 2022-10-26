@@ -44,12 +44,16 @@ func BuildTestClient(certificate *jwt_certificate.Certificate, clientSecret stri
 		requestPath = "/"
 	}
 	clientRequestPath, err := url.Parse(requestPath)
-	base, err := url.Parse(middlwareServer.URL)
-	clientRequestUrl = base.ResolveReference(clientRequestPath)
-
 	if err != nil {
 		return nil, "", "", "", nil, nil, err
 	}
+
+	base, err := url.Parse(middlwareServer.URL)
+	if err != nil {
+		return nil, "", "", "", nil, nil, err
+	}
+
+	clientRequestUrl = base.ResolveReference(clientRequestPath)
 
 	nonce = guuid.NewString()
 	issuedAt = strconv.FormatInt(time.Now().UTC().Unix(), 10)
@@ -115,29 +119,31 @@ func BuildTestClient(certificate *jwt_certificate.Certificate, clientSecret stri
 }
 
 // MustNewRequest creates a new http get request or panics if it can't.
-func MustNewRequest(method, urlStr string, body io.Reader) *http.Request {
+func MustNewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
 	request, err := http.NewRequest(method, urlStr, body)
 	if err != nil {
-		panic(fmt.Sprintf("failed to create HTTP %s Request for '%s': %s", method, urlStr, err))
+		return nil, err
+
 	}
-	return request
+	return request, nil
 }
 
 func RunTestAuthenticationWithConfigurationSuccess(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, tokenInjector jwt_flow.TokenInjector, configuration func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers(certificatePath, certificatePath, configuration)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
 	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
+	assert.NoError(t, err)
 
-	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	assert.NoError(t, err)
 
 	tokenInjector(req, signedToken)
-	res, err := client.Do(req)
 
+	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
@@ -148,18 +154,20 @@ func RunTestAuthenticationWithConfigurationSuccess(t *testing.T, signingMethod j
 
 func RunTestAuthenticationWithConfigurationFailure(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, tokenInjector jwt_flow.TokenInjector, configuration func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config) {
 	certificate, jwksServer, pluginServer, err := BuildTestServers(certificatePath, certificatePath, configuration)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
 	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
+	assert.NoError(t, err)
 
-	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	assert.NoError(t, err)
+
 	tokenInjector(req, signedToken)
-	res, err := client.Do(req)
 
+	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 }
@@ -171,22 +179,20 @@ func RunTestWithClientSecretSuccess(t *testing.T, clientSecret string, tokenInje
 	}
 
 	_, jwksServer, pluginServer, err := BuildTestServers("", "", configuration)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
 	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(nil, clientSecret, jwksServer, pluginServer, jwtgo.SigningMethodHS256, "", nil, nil, func(token *jwtgo.Token) {})
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
-	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	assert.NoError(t, err)
+
 	tokenInjector(req, signedToken)
-	res, err := client.Do(req)
 
+	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
@@ -202,18 +208,20 @@ func RunTestWithClientSecretFailure(t *testing.T, serverClientSecret string, cli
 	}
 
 	_, jwksServer, pluginServer, err := BuildTestServers("", "", configuration)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
 	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(nil, clientClientSecret, jwksServer, pluginServer, jwtgo.SigningMethodHS256, "", nil, nil, func(token *jwtgo.Token) {})
+	assert.NoError(t, err)
 
-	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	assert.NoError(t, err)
+
 	tokenInjector(req, signedToken)
-	res, err := client.Do(req)
 
+	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 
@@ -225,9 +233,7 @@ func RunTestWithClientSecretFailure(t *testing.T, serverClientSecret string, cli
 func RunTestWithPublicKeySuccess(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, tokenInjector jwt_flow.TokenInjector) {
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		certContent, err := certificate.CertFile.Read()
-		if err != nil {
-			panic(err)
-		}
+		assert.NoError(t, err)
 
 		pluginConfig.PublicKey = string(certContent)
 
@@ -235,18 +241,20 @@ func RunTestWithPublicKeySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 	}
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers(certificatePath, certificatePath, configuration)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
 	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) {})
+	assert.NoError(t, err)
 
-	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	assert.NoError(t, err)
+
 	tokenInjector(req, signedToken)
-	res, err := client.Do(req)
 
+	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
@@ -258,9 +266,7 @@ func RunTestWithPublicKeySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 func RunTestWithPublicKeyFailure(t *testing.T, signingMethod jwtgo.SigningMethod, publicKeyRootPath string, privateKeyRootPath string, tokenInjector jwt_flow.TokenInjector) {
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		certContent, err := certificate.CertFile.Read()
-		if err != nil {
-			panic(err)
-		}
+		assert.NoError(t, err)
 
 		pluginConfig.PublicKey = string(certContent)
 
@@ -268,18 +274,20 @@ func RunTestWithPublicKeyFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 	}
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers(publicKeyRootPath, privateKeyRootPath, configuration)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
 	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) {})
+	assert.NoError(t, err)
 
-	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	assert.NoError(t, err)
+
 	tokenInjector(req, signedToken)
-	res, err := client.Do(req)
 
+	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 
@@ -304,19 +312,20 @@ func RunTestWithDiscoverySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 	}
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers(certificatePath, certificatePath, configuration)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
 	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
+	assert.NoError(t, err)
 
-	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	assert.NoError(t, err)
 
 	tokenInjector(req, signedToken)
-	res, err := client.Do(req)
 
+	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
@@ -340,27 +349,23 @@ func RunTestWithDiscoveryFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 		return pluginConfig
 	}
 	_, jwksServer, pluginServer, err := BuildTestServers(serverCertificatePath, serverCertificatePath, configuration)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
 	clientCertificate, err := test_utils.GetCertificateFromPath(clientCertificatePath, clientCertificatePath)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(clientCertificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 
-	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
+	assert.NoError(t, err)
 
 	tokenInjector(req, signedToken)
-	res, err := client.Do(req)
 
+	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 
