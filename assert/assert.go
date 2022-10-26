@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
+	"strings"
 )
 
 // Tester is a stub interface that *testing.T conforms to. It is used in all
@@ -26,6 +27,10 @@ import (
 //	}
 type Tester interface {
 	Fatalf(string, ...interface{})
+}
+
+type tHelper interface {
+	Helper()
 }
 
 // frameWrapper fulfills the Tester interface and is a simple wrapper around another Tester that
@@ -71,13 +76,24 @@ func callerStr(t Tester) string {
 // by a callerStr representation of the code numFrames above the caller of
 // this function
 func callerStrf(t Tester, fmtStr string, vals ...interface{}) string {
+	frameWrapper := WithFrameWrapper(t)
+	caller := callerStr(frameWrapper)
 	origStr := fmt.Sprintf(fmtStr, vals...)
-	return fmt.Sprintf("%s: %s", callerStr(WithFrameWrapper(t)), origStr)
+	framesWithCaller := fmt.Sprintf("%s: %s", caller, origStr)
+	runningUnderYegai := strings.Contains(caller, "traefik/yaegi@")
+	if runningUnderYegai {
+		fmt.Println(framesWithCaller)
+	}
+	return framesWithCaller
 }
 
 // True fails the test if b is false. on failure, it calls
 // t.Fatalf(fmtStr, vals...)
 func True(t Tester, b bool, fmtStr string, vals ...interface{}) {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if !b {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), fmtStr, vals...))
 	}
@@ -85,6 +101,10 @@ func True(t Tester, b bool, fmtStr string, vals ...interface{}) {
 
 // False is the equivalent of True(t, !b, fmtStr, vals...).
 func False(t Tester, b bool, fmtStr string, vals ...interface{}) {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if b {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), fmtStr, vals...))
 	}
@@ -94,6 +114,10 @@ func False(t Tester, b bool, fmtStr string, vals ...interface{}) {
 // Nil calls t.Fatalf explaining that the noun i is not nil when it should have
 // been
 func Nil(t Tester, i interface{}, noun string) {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if !isNil(i) {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), "the given %s [%+v] was not nil when it should have been", noun, i))
 	}
@@ -103,6 +127,10 @@ func Nil(t Tester, i interface{}, noun string) {
 // if it is, NotNil calls t.Fatalf explaining that the noun i is nil when it
 // shouldn't have been.
 func NotNil(t Tester, i interface{}, noun string) {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if isNil(i) {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), "the given %s was nil when it shouldn't have been", noun))
 	}
@@ -111,6 +139,10 @@ func NotNil(t Tester, i interface{}, noun string) {
 // Err calls t.Fatalf if expected is not equal to actual.
 // it uses reflect.DeepEqual to determine if the errors are equal
 func Error(t Tester, expected error, actual error) {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if !reflect.DeepEqual(expected, actual) {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), "expected error %s but got %s", expected, actual))
 	}
@@ -119,6 +151,10 @@ func Error(t Tester, expected error, actual error) {
 // ExistsErr calls t.Fatalf if err == nil. The message will explain that the error
 // described by noun was nil when it shouldn't have been
 func ExistsError(t Tester, err error, noun string) {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if err == nil {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), "given error for %s was nil when it shouldn't have been", noun))
 	}
@@ -126,8 +162,12 @@ func ExistsError(t Tester, err error, noun string) {
 
 // NoErr calls t.Fatalf if e is not nil.
 func NoError(t Tester, e error) {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if e != nil {
-		t.Fatalf(callerStrf(WithFrameWrapper(t), "expected no error but got %s", e))
+		t.Fatalf(callerStrf(WithFrameWrapper(t), "expected no error but received:\n%+v", e))
 	}
 }
 
@@ -136,6 +176,10 @@ func NoError(t Tester, e error) {
 // name is used to describe the values being compared. it's used in the error
 // string if actual != expected.
 func Equal(t Tester, actual, expected interface{}, noun string) {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if !objectsAreEqual(expected, actual) {
 		diffValue := diff(expected, actual)
 		expected, actual = formatUnequalValues(expected, actual)
@@ -153,6 +197,10 @@ func Equal(t Tester, actual, expected interface{}, noun string) {
 // Pointer variable equality is determined based on the equality of the
 // referenced values (as opposed to the memory addresses).
 func NotEqual(t Tester, expected, actual interface{}, noun string) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if err := validateEqualArgs(expected, actual); err != nil {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), "%s Invalid operation: %#v != %#v (%s)", noun, expected, actual, err))
 	}
@@ -169,6 +217,10 @@ func NotEqual(t Tester, expected, actual interface{}, noun string) bool {
 //
 //	assert.EqualValues(t, uint32(123), int32(123))
 func EqualValues(t Tester, expected, actual interface{}, noun string) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if !objectsAreEqualValues(expected, actual) {
 		diffValue := diff(expected, actual)
 		expected, actual = formatUnequalValues(expected, actual)
@@ -185,6 +237,10 @@ func EqualValues(t Tester, expected, actual interface{}, noun string) bool {
 //
 //	assert.NotEqualValues(t, obj1, obj2)
 func NotEqualValues(t Tester, expected, actual interface{}, noun string) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	if objectsAreEqualValues(expected, actual) {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), "%s should not be equal", noun))
 	}
@@ -199,6 +255,10 @@ func NotEqualValues(t Tester, expected, actual interface{}, noun string) bool {
 //	  assert.Equal(t, "two", obj[1])
 //	}
 func NotEmpty(t Tester, i interface{}, noun string) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	pass := !isEmpty(i)
 	if !pass {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), "the given %s was empty when it shouldn't have been", noun))
@@ -212,6 +272,10 @@ func NotEmpty(t Tester, i interface{}, noun string) bool {
 //
 //	assert.Len(t, mySlice, 3)
 func Len(t Tester, object interface{}, length int, noun string) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	ok, l := getLen(object)
 	if !ok {
 		t.Fatalf(callerStrf(WithFrameWrapper(t), "the given %s could not be applied builtin len()", noun))
@@ -228,6 +292,10 @@ func Len(t Tester, object interface{}, length int, noun string) bool {
 //	assert.Regexp(t, regexp.MustCompile("start"), "it's starting")
 //	assert.Regexp(t, "start...$", "it's not starting")
 func Regexp(t Tester, rx interface{}, str interface{}, noun string) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
 	match := matchRegexp(rx, str)
 
 	if !match {
@@ -242,6 +310,9 @@ func Regexp(t Tester, rx interface{}, str interface{}, noun string) bool {
 //	assert.NotRegexp(t, regexp.MustCompile("starts"), "it's starting")
 //	assert.NotRegexp(t, "^start", "it's not starting")
 func NotRegexp(t Tester, rx interface{}, str interface{}, noun string) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
 
 	match := matchRegexp(rx, str)
 
