@@ -3,13 +3,6 @@ package integration
 import (
 	"crypto/tls"
 	"fmt"
-	jwtgo "github.com/golang-jwt/jwt/v4"
-	guuid "github.com/google/uuid"
-	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/assert"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
-	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +10,14 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	jwtgo "github.com/golang-jwt/jwt/v4"
+	guuid "github.com/google/uuid"
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/assert"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
+	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
 )
 
 type overrideClient func(*http.Client) *http.Client
@@ -60,13 +61,13 @@ func BuildTestClient(certificate *jwt_certificate.Certificate, clientSecret stri
 
 	var privateKey interface{}
 	if clientSecret != "" {
-		if tokenSigningMethod != jwtgo.SigningMethodHS256 && tokenSigningMethod != jwtgo.SigningMethodHS384 && tokenSigningMethod != jwtgo.SigningMethodHS512 {
+		if tokenSigningMethod.Alg() != jwtgo.SigningMethodHS256.Name && tokenSigningMethod.Alg() != jwtgo.SigningMethodHS384.Name && tokenSigningMethod.Alg() != jwtgo.SigningMethodHS512.Name {
 			return nil, "", "", "", nil, nil, fmt.Errorf("certificate needs to be specified with this signing method")
 		}
 
 		privateKey = []byte(clientSecret)
 	} else if certificate != nil {
-		if tokenSigningMethod == jwtgo.SigningMethodHS256 || tokenSigningMethod == jwtgo.SigningMethodHS384 || tokenSigningMethod == jwtgo.SigningMethodHS512 {
+		if tokenSigningMethod.Alg() == jwtgo.SigningMethodHS256.Name || tokenSigningMethod.Alg() == jwtgo.SigningMethodHS384.Name || tokenSigningMethod.Alg() == jwtgo.SigningMethodHS512.Name {
 			return nil, "", "", "", nil, nil, fmt.Errorf("client secret needs to be specified with this signing method")
 		}
 
@@ -176,6 +177,10 @@ func RunTestWithClientSecretSuccess(t *testing.T, clientSecret string, tokenInje
 	defer pluginServer.Close()
 
 	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(nil, clientSecret, jwksServer, pluginServer, jwtgo.SigningMethodHS256, "", nil, nil, func(token *jwtgo.Token) {})
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
 
 	req := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
 	tokenInjector(req, signedToken)
