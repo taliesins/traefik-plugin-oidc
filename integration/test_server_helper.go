@@ -4,38 +4,42 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	"gopkg.in/square/go-jose.v2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
-	"runtime"
+
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
+	"gopkg.in/square/go-jose.v2"
 )
 
 func GetCertificateFromPath(publicKeyRootPath string, privateKeyRootPath string) (*jwt_certificate.Certificate, error) {
-	_, filename, _, _ := runtime.Caller(0)
+	// _, filename, _, _ := runtime.Caller(0)
 
-	currentDirectory := path.Dir(filename)
-	currentDirectoryName := filepath.Base(currentDirectory)
-	if currentDirectoryName == "reflect" {
-		// We are running the tests using yeagi so fix the path by getting it relative to the GOPATH
-		ex, err := os.Executable()
-		if err != nil {
-			panic(err)
-		}
-
-		goPath := filepath.Dir(filepath.Dir(ex))
-
-		if os.PathSeparator == '\\' {
-			currentDirectory = path.Join(goPath, "src\\github.com\\taliesins\\traefik-plugin-oidc\\integration")
-		} else {
-			currentDirectory = path.Join(goPath, "src/github.com/taliesins/traefik-plugin-oidc/integration")
-		}
+	currentDirectory, err := os.Getwd()
+	if err != nil {
+		panic(err)
 	}
+	// currentDirectoryName := filepath.Base(currentDirectory)
+	// if currentDirectoryName == "reflect" {
+	// 	// We are running the tests using yeagi so fix the path by getting it relative to the GOPATH
+	// 	ex, err := os.Executable()
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		panic(err)
+	// 	}
+
+	// 	goPath := filepath.Dir(filepath.Dir(ex))
+	// 	// fmt.Println("Go Path: " + err.Error())
+	// 	goPath, _ = os.Getwd()
+	// 	if os.PathSeparator == '\\' {
+	// 		currentDirectory = path.Join(goPath, "\\integration")
+	// 	} else {
+	// 		currentDirectory = path.Join(goPath, "integration")
+	// 	}
+	// }
 
 	publicKeyPath := fmt.Sprintf("%s.crt", path.Join(currentDirectory, publicKeyRootPath))
 	if _, err := os.Stat(publicKeyPath); os.IsNotExist(err) {
