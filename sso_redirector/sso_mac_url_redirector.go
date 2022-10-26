@@ -4,7 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"fmt"
-	jwtgo "github.com/golang-jwt/jwt/v4"
+	jwtgo "github.com/taliesins/traefik-plugin-oidc/jwt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -149,35 +149,43 @@ func signMac(signingString string, macSigningKey interface{}, macStrength MacStr
 	switch privateKeyType := macSigningKey.(type) {
 	case *rsa.PrivateKey:
 		{
-			length := macSigningKey.(*rsa.PrivateKey).N.BitLen() / 8
+			var rsaMacSigningKey *rsa.PrivateKey
+			rsaMacSigningKey = macSigningKey.(*rsa.PrivateKey)
+
+			length := rsaMacSigningKey.N.BitLen() / 8
+
 			switch length {
 			case 256:
-				return jwtgo.SigningMethodRS256.Sign(signingString, privateKeyType)
+				signed, err := jwtgo.SigningMethodRS256.Sign(signingString, rsaMacSigningKey)
+				return signed, err
 			case 384:
-				return jwtgo.SigningMethodRS384.Sign(signingString, privateKeyType)
+				return jwtgo.SigningMethodRS384.Sign(signingString, macSigningKey)
 			case 512:
-				return jwtgo.SigningMethodRS512.Sign(signingString, privateKeyType)
+				return jwtgo.SigningMethodRS512.Sign(signingString, macSigningKey)
 			default:
 				return "", fmt.Errorf("unsupported mac signing method strength %T", length)
 			}
 		}
 	case *ecdsa.PrivateKey:
 		{
+			fmt.Printf("start sign ecdsa\n")
+
 			length := macSigningKey.(*ecdsa.PrivateKey).Curve.Params().BitSize
 
 			switch length {
 			case 256:
-				return jwtgo.SigningMethodES256.Sign(signingString, privateKeyType)
+				return jwtgo.SigningMethodES256.Sign(signingString, macSigningKey)
 			case 384:
-				return jwtgo.SigningMethodES384.Sign(signingString, privateKeyType)
+				return jwtgo.SigningMethodES384.Sign(signingString, macSigningKey)
 			case 521:
-				return jwtgo.SigningMethodES512.Sign(signingString, privateKeyType)
+				return jwtgo.SigningMethodES512.Sign(signingString, macSigningKey)
 			default:
 				return "", fmt.Errorf("unsupported mac signing method strength %T", length)
 			}
 		}
 	case []byte:
 		{
+			fmt.Printf("start sign byte\n")
 			switch macStrength {
 			case MacStrength_256:
 				return jwtgo.SigningMethodHS256.Sign(signingString, macSigningKey)
@@ -190,6 +198,7 @@ func signMac(signingString string, macSigningKey interface{}, macStrength MacStr
 			}
 		}
 	default:
+		fmt.Printf("start sign default\n")
 		return "", fmt.Errorf("unsupported mac signing key type %T", privateKeyType)
 	}
 }

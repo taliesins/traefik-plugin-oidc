@@ -3,6 +3,13 @@ package integration
 import (
 	"crypto/tls"
 	"fmt"
+	guuid "github.com/google/uuid"
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/assert"
+	jwtgo "github.com/taliesins/traefik-plugin-oidc/jwt"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
+	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
 	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 	"io"
 	"net/http"
@@ -11,14 +18,6 @@ import (
 	"strconv"
 	"testing"
 	"time"
-
-	jwtgo "github.com/golang-jwt/jwt/v4"
-	guuid "github.com/google/uuid"
-	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/assert"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
-	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
 )
 
 type overrideClient func(*http.Client) *http.Client

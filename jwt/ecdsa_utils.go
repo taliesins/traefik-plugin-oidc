@@ -31,10 +31,7 @@ func ParseECPrivateKeyFromPEM(key []byte) (*ecdsa.PrivateKey, error) {
 	}
 
 	var pkey *ecdsa.PrivateKey
-	var ok bool
-	if pkey, ok = parsedKey.(*ecdsa.PrivateKey); !ok {
-		return nil, ErrNotECPrivateKey
-	}
+	pkey = parsedKey.(*ecdsa.PrivateKey)
 
 	return pkey, nil
 }
@@ -60,10 +57,7 @@ func ParseECPublicKeyFromPEM(key []byte) (*ecdsa.PublicKey, error) {
 	}
 
 	var pkey *ecdsa.PublicKey
-	var ok bool
-	if pkey, ok = parsedKey.(*ecdsa.PublicKey); !ok {
-		return nil, ErrNotECPublicKey
-	}
-
+	pkey = parsedKey.(*ecdsa.PublicKey)
+	
 	return pkey, nil
 }

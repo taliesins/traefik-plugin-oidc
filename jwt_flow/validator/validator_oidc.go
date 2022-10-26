@@ -7,13 +7,11 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
-	"net/url"
-
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/taliesins/traefik-plugin-oidc/jwks"
+	"github.com/taliesins/traefik-plugin-oidc/jwt"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
 	"github.com/taliesins/traefik-plugin-oidc/log"
-
+	"net/url"
 	"regexp"
 	"time"
 )

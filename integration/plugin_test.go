@@ -2,9 +2,9 @@ package integration
 
 import (
 	"fmt"
-	jwtgo "github.com/golang-jwt/jwt/v4"
 	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
 	"github.com/taliesins/traefik-plugin-oidc/assert"
+	jwtgo "github.com/taliesins/traefik-plugin-oidc/jwt"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
 	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"

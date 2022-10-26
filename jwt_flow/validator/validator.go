@@ -3,8 +3,8 @@ package validator
 import (
 	"context"
 	"fmt"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
+	"github.com/taliesins/traefik-plugin-oidc/jwt"
 	"time"
 )
 
