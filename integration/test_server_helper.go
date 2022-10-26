@@ -143,6 +143,9 @@ func BuildTestServers(publicKeyRootPath string, privateKeyRootPath string, overr
 	jwksUriPath := "/common/discovery/keys"
 
 	certificate, jwksServer, err = BuildTestJwkServer(publicKeyRootPath, privateKeyRootPath, oidcDiscoveryUriPath, jwksUriPath)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 
 	ssoAddressTemplate := "https://login.microsoftonline.com/traefik_k8s_test.onmicrosoft.com/oauth2/v2.0/authorize?p=B2C_1A_signup_signin&client_id=1234f2b2-9fe3-1234-11a6-f123e76e3843&nonce={{.Nonce}}&redirect_uri={{.CallbackUrl}}&state={{.State}}&scope=openid&response_type=id_token&prompt=login"
 	issuerUri, err := url.Parse(jwksServer.URL)
