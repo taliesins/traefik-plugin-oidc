@@ -3,13 +3,9 @@ package validator
 import (
 	"context"
 	"fmt"
-
-	"github.com/pkg/errors"
-
-	// "gopkg.in/square/go-jose.v2/jwt"
-	"time"
-
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/pkg/errors"
+	"time"
 )
 
 // Signature algorithms

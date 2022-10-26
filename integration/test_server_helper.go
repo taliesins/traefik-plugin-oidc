@@ -5,18 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/jwks"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"github.com/taliesins/traefik-plugin-oidc/test_utils"
-	"gopkg.in/square/go-jose.v2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path"
-
-	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/jwks"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 )
 
 func getJsonWebset(certificate *jwt_certificate.Certificate) (*jwks.JSONWebKeySet, error) {
