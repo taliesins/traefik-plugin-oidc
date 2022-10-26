@@ -8,6 +8,7 @@ import (
 	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
 	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
+	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 	"io"
 	"net/http"
 	"net/url"
@@ -48,126 +49,126 @@ func TestWithClientSecretInCookieWrongSecretFailure(t *testing.T) {
 // ***************** Signing with Public Key Tests
 
 func TestWithPublicKeyInAuthorizationHeaderSuccess(t *testing.T) {
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES256, "fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES384, "fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES512, "fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS256, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS384, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS512, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS384, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS512, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES256, "integration/fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES384, "integration/fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES512, "integration/fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS256, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS384, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS512, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS384, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS512, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithPublicKeyInAuthorizationHeaderFailure(t *testing.T) {
 	//As long as the cert we are using is different
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES256, "fixtures/signing/es512", "fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES384, "fixtures/signing/es256", "fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES512, "fixtures/signing/es256", "fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS256, "fixtures/https/snitest.com", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS384, "fixtures/https/snitest.com", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS512, "fixtures/https/snitest.com", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS256, "fixtures/https/snitest.com", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS384, "fixtures/https/snitest.com", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS512, "fixtures/https/snitest.com", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES256, "integration/fixtures/signing/es512", "integration/fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES384, "integration/fixtures/signing/es256", "integration/fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES512, "integration/fixtures/signing/es256", "integration/fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS256, "integration/fixtures/https/snitest.com", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS384, "integration/fixtures/https/snitest.com", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS512, "integration/fixtures/https/snitest.com", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS256, "integration/fixtures/https/snitest.com", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS384, "integration/fixtures/https/snitest.com", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS512, "integration/fixtures/https/snitest.com", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithPublicKeyInQuerystringSuccess(t *testing.T) {
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES256, "fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES384, "fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES512, "fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS256, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS384, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS512, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS384, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS512, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES256, "integration/fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES384, "integration/fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES512, "integration/fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS256, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS384, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS512, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS384, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS512, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
 }
 
 func TestWithPublicKeyInQuerystringFailure(t *testing.T) {
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES256, "fixtures/signing/another.es256", "fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES384, "fixtures/signing/another.es384", "fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES512, "fixtures/signing/another.es512", "fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS256, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS384, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS512, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS256, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS384, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS512, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES256, "integration/fixtures/signing/another.es256", "integration/fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES384, "integration/fixtures/signing/another.es384", "integration/fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES512, "integration/fixtures/signing/another.es512", "integration/fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS256, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS384, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS512, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS384, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS512, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.ParameterTokenInjector(sso_redirector.IdTokenBookmarkParameterName)))
 }
 
 func TestWithPublicKeyInCookieSuccess(t *testing.T) {
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES256, "fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES384, "fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES512, "fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS256, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS384, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS512, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS384, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS512, "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES256, "integration/fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES384, "integration/fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodES512, "integration/fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS256, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS384, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodPS512, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS384, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS512, "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
 }
 
 func TestWithPublicKeyInCookieFailure(t *testing.T) {
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES256, "fixtures/signing/another.es256", "fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES384, "fixtures/signing/another.es384", "fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES512, "fixtures/signing/another.es512", "fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS256, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS384, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS512, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS256, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS384, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS512, "fixtures/signing/another.rsa", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES256, "integration/fixtures/signing/another.es256", "integration/fixtures/signing/es256", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES384, "integration/fixtures/signing/another.es384", "integration/fixtures/signing/es384", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodES512, "integration/fixtures/signing/another.es512", "integration/fixtures/signing/es512", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS256, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS384, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodPS512, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS384, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS512, "integration/fixtures/signing/another.rsa", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.CookieTokenInjector(sso_redirector.SessionCookieName)))
 }
 
 func TestWithSignedRsaPublicKeySuccess(t *testing.T) {
-	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS256, "fixtures/https/snitest.com", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeySuccess(t, jwtgo.SigningMethodRS256, "integration/fixtures/https/snitest.com", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithRsaPublicKeySignedWithWrongPrivateKeyFailure(t *testing.T) {
-	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS256, "fixtures/https/snitest.com", "fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithPublicKeyFailure(t, jwtgo.SigningMethodRS256, "integration/fixtures/https/snitest.com", "integration/fixtures/signing/rsa", jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 // ***************** Signing using Oidc to get signing method Tests
 
 func TestWithOidcInAuthorizationHeaderSuccess(t *testing.T) {
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES256, "fixtures/signing/es256", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES384, "fixtures/signing/es384", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES512, "fixtures/signing/es512", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS256, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS384, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS512, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS384, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS512, "fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES256, "integration/fixtures/signing/es256", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES384, "integration/fixtures/signing/es384", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodES512, "integration/fixtures/signing/es512", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS256, "integration/fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS384, "integration/fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodPS512, "integration/fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS384, "integration/fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS512, "integration/fixtures/signing/rsa", true, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithOidcInAuthorizationHeaderFailure(t *testing.T) {
-	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodES256, "fixtures/signing/es256", "fixtures/signing/another.es256", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodES384, "fixtures/signing/es384", "fixtures/signing/another.es384", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodES512, "fixtures/signing/es512", "fixtures/signing/another.es512", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodPS256, "fixtures/signing/rsa", "fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodPS384, "fixtures/signing/rsa", "fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodPS512, "fixtures/signing/rsa", "fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", "fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodRS384, "fixtures/signing/rsa", "fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
-	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodRS512, "fixtures/signing/rsa", "fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodES256, "integration/fixtures/signing/es256", "integration/fixtures/signing/another.es256", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodES384, "integration/fixtures/signing/es384", "integration/fixtures/signing/another.es384", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodES512, "integration/fixtures/signing/es512", "integration/fixtures/signing/another.es512", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodPS256, "integration/fixtures/signing/rsa", "integration/fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodPS384, "integration/fixtures/signing/rsa", "integration/fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodPS512, "integration/fixtures/signing/rsa", "integration/fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/rsa", "integration/fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodRS384, "integration/fixtures/signing/rsa", "integration/fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoveryFailure(t, jwtgo.SigningMethodRS512, "integration/fixtures/signing/rsa", "integration/fixtures/signing/another.rsa", true, false, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithRS256UsingJwksUriSuccess(t *testing.T) {
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", true, false, true, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/rsa", true, false, true, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithRS256UsingOpenIdConnectDiscoveryUriSuccess(t *testing.T) {
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", false, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/rsa", false, true, false, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithRS256UsingIssuerUriSuccess(t *testing.T) {
-	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "fixtures/signing/rsa", false, false, true, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
+	RunTestWithDiscoverySuccess(t, jwtgo.SigningMethodRS256, "integration/fixtures/signing/rsa", false, false, true, jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector))
 }
 
 func TestWithNoAuthenticationAndNoSsoProvidedFailure(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("integration/fixtures/signing/rsa", "integration/fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		return pluginConfig
 	})
@@ -201,7 +202,7 @@ func TestWithNoAuthenticationAndNoSsoProvidedFailure(t *testing.T) {
 func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 	var expectedSsoAddressTemplate string
 
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("integration/fixtures/signing/rsa", "integration/fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -231,7 +232,7 @@ func TestWithNoAuthenticationAndSsoProvidedFailure(t *testing.T) {
 }
 
 func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("integration/fixtures/signing/rsa", "integration/fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -271,7 +272,7 @@ func TestWithRedirectFromSsoButIdTokenIsStoredInBookmarkSuccess(t *testing.T) {
 }
 
 func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("integration/fixtures/signing/rsa", "integration/fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -314,7 +315,7 @@ func TestRedirectorWithValidCookieAndValidHashSuccess(t *testing.T) {
 }
 
 func TestRedirectorWithInvalidCookieAndValidHashSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("integration/fixtures/signing/rsa", "integration/fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -361,7 +362,7 @@ func TestRedirectorWithInvalidCookieAndValidHashSuccess(t *testing.T) {
 }
 
 func TestRedirectorWithValidCookieAndValidHashAndUsingDiscoveryAddressSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("integration/fixtures/signing/rsa", "integration/fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.OidcDiscoveryAddress = oidcDiscoveryUri.String()
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
 		pluginConfig.SsoRedirectUrlMacPrivateKey = certificate.KeyFile.String()
@@ -403,7 +404,7 @@ func TestRedirectorWithValidCookieAndValidHashAndUsingDiscoveryAddressSuccess(t 
 }
 
 func TestRedirectorWithValidPostAndValidHashSuccess(t *testing.T) {
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("integration/fixtures/signing/rsa", "integration/fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -447,7 +448,7 @@ func TestRedirectorWithValidPostAndValidHashSuccess(t *testing.T) {
 func TestWithNoAuthenticationAndIgnorePathMatched(t *testing.T) {
 	//var expectedSsoAddressTemplate string
 
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("integration/fixtures/signing/rsa", "integration/fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -485,7 +486,7 @@ func TestWithNoAuthenticationAndIgnorePathMatched(t *testing.T) {
 func TestWithNoAuthenticationAndIgnorePathNotMatched(t *testing.T) {
 	var expectedSsoAddressTemplate string
 
-	certificate, jwksServer, pluginServer, err := BuildTestServers("fixtures/signing/rsa", "fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+	certificate, jwksServer, pluginServer, err := BuildTestServers("integration/fixtures/signing/rsa", "integration/fixtures/signing/rsa", func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.Issuer = issuerUri.String()
 		pluginConfig.UseDynamicValidation = true
 		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
@@ -577,7 +578,7 @@ func AssertRedirectPageIsReturned(t *testing.T, res *http.Response, expectedSsoA
 
 func TestWithValidCredentialsAndAlgorithmRegexSuccess(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
@@ -591,7 +592,7 @@ func TestWithValidCredentialsAndAlgorithmRegexSuccess(t *testing.T) {
 
 func TestWithValidCredentialsAndAlgorithmRegexFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
@@ -605,7 +606,7 @@ func TestWithValidCredentialsAndAlgorithmRegexFailure(t *testing.T) {
 
 func TestWithValidCredentialsAndIssuerRegexSuccess(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
@@ -619,7 +620,7 @@ func TestWithValidCredentialsAndIssuerRegexSuccess(t *testing.T) {
 
 func TestWithValidCredentialsAndIssuerRegexFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
@@ -633,7 +634,7 @@ func TestWithValidCredentialsAndIssuerRegexFailure(t *testing.T) {
 
 func TestWithValidCredentialsAndAudienceRegexSuccess(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
@@ -647,7 +648,7 @@ func TestWithValidCredentialsAndAudienceRegexSuccess(t *testing.T) {
 
 func TestWithValidCredentialsAndAudienceRegexFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
@@ -661,7 +662,7 @@ func TestWithValidCredentialsAndAudienceRegexFailure(t *testing.T) {
 
 func TestWithValidCredentialsAndSubjectRegexSuccess(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
@@ -675,7 +676,7 @@ func TestWithValidCredentialsAndSubjectRegexSuccess(t *testing.T) {
 
 func TestWithValidCredentialsAndSubjectRegexFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
 		pluginConfig.JwksAddress = jwksUri.String()
@@ -689,7 +690,7 @@ func TestWithValidCredentialsAndSubjectRegexFailure(t *testing.T) {
 
 func TestWithValidCredentialsAndDynamicValidationMatchPrimarySuccess(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
@@ -704,7 +705,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimarySuccess(t *testing.
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	dynamicCertificatePath := "fixtures/signing/another.rsa"
+	dynamicCertificatePath := "integration/fixtures/signing/another.rsa"
 	dynamicOidcDiscoveryUriPath := "/.well-known/openid-configuration"
 	dynamicJwksUriPath := "/common/discovery/keys"
 	_, dynamicJwksServer, err := BuildTestJwkServer(dynamicCertificatePath, dynamicCertificatePath, dynamicOidcDiscoveryUriPath, dynamicJwksUriPath)
@@ -728,7 +729,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimarySuccess(t *testing.
 
 func TestWithValidCredentialsAndDynamicValidationMatchDynamicSuccess(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
@@ -743,7 +744,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicSuccess(t *testing.
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	dynamicCertificatePath := "fixtures/signing/another.rsa"
+	dynamicCertificatePath := "integration/fixtures/signing/another.rsa"
 	dynamicOidcDiscoveryUriPath := "/.well-known/openid-configuration"
 	dynamicJwksUriPath := "/common/discovery/keys"
 	dynamicCertificate, dynamicJwksServer, err := BuildTestJwkServer(dynamicCertificatePath, dynamicCertificatePath, dynamicOidcDiscoveryUriPath, dynamicJwksUriPath)
@@ -767,7 +768,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicSuccess(t *testing.
 
 func TestWithValidCredentialsAndDynamicValidationMatchPrimaryFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
@@ -782,15 +783,15 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimaryFailure(t *testing.
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	dynamicCertificatePath := "fixtures/signing/rsa"
+	dynamicCertificatePath := "integration/fixtures/signing/rsa"
 	dynamicOidcDiscoveryUriPath := "/.well-known/openid-configuration"
 	dynamicJwksUriPath := "/common/discovery/keys"
 	_, dynamicJwksServer, err := BuildTestJwkServer(dynamicCertificatePath, dynamicCertificatePath, dynamicOidcDiscoveryUriPath, dynamicJwksUriPath)
 	defer dynamicJwksServer.Close()
 
 	//Client is making request with a token that is signed by a dodgy certificate that will be validated by the primary jwks server
-	dodgyCertificatePath := "fixtures/signing/another.rsa"
-	dodgyCertificate, err := GetCertificateFromPath(dodgyCertificatePath, dodgyCertificatePath)
+	dodgyCertificatePath := "integration/fixtures/signing/another.rsa"
+	dodgyCertificate, err := test_utils.GetCertificateFromPath(dodgyCertificatePath, dodgyCertificatePath)
 	if err != nil {
 		panic(err)
 	}
@@ -807,7 +808,7 @@ func TestWithValidCredentialsAndDynamicValidationMatchPrimaryFailure(t *testing.
 
 func TestWithValidCredentialsAndDynamicValidationMatchDynamicFailure(t *testing.T) {
 	signingMethod := jwtgo.SigningMethodRS256
-	certificatePath := "fixtures/signing/rsa"
+	certificatePath := "integration/fixtures/signing/rsa"
 	tokenInjector := jwt_flow.MultiTokenInjector(jwt_flow.AuthHeaderTokenInjector)
 
 	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
@@ -822,15 +823,15 @@ func TestWithValidCredentialsAndDynamicValidationMatchDynamicFailure(t *testing.
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	dynamicCertificatePath := "fixtures/signing/rsa"
+	dynamicCertificatePath := "integration/fixtures/signing/rsa"
 	dynamicOidcDiscoveryUriPath := "/.well-known/openid-configuration"
 	dynamicJwksUriPath := "/common/discovery/keys"
 	_, dynamicJwksServer, err := BuildTestJwkServer(dynamicCertificatePath, dynamicCertificatePath, dynamicOidcDiscoveryUriPath, dynamicJwksUriPath)
 	defer dynamicJwksServer.Close()
 
 	//Client is making request with a token that is signed by a dodgy certificate that will be validated by the dynamic jwks server
-	dodgyCertificatePath := "fixtures/signing/another.rsa"
-	dodgyCertificate, err := GetCertificateFromPath(dodgyCertificatePath, dodgyCertificatePath)
+	dodgyCertificatePath := "integration/fixtures/signing/another.rsa"
+	dodgyCertificate, err := test_utils.GetCertificateFromPath(dodgyCertificatePath, dodgyCertificatePath)
 	if err != nil {
 		panic(err)
 	}

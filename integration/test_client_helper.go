@@ -3,6 +3,7 @@ package integration
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -345,7 +346,7 @@ func RunTestWithDiscoveryFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	clientCertificate, err := GetCertificateFromPath(clientCertificatePath, clientCertificatePath)
+	clientCertificate, err := test_utils.GetCertificateFromPath(clientCertificatePath, clientCertificatePath)
 	if err != nil {
 		panic(err)
 	}
