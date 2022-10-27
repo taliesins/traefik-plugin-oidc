@@ -13,7 +13,7 @@ import (
 // JWTMiddleware.
 func OidcSuccessHandler(
 	ssoRedirectUrlMacSigningKey interface{},
-	ssoRedirectUrlMacStrength sso_redirector.MacStrength,
+	ssoRedirectUrlMacStrength sso_redirector.HmacStrength,
 	ssoRedirectUrlMacAllowedClockSkew time.Duration,
 ) SuccessHandler {
 	return func(logger *log.Logger, next http.Handler, w http.ResponseWriter, r *http.Request, token string) {

@@ -19,7 +19,7 @@ import (
 func OidcErrorHandler(
 	ssoRedirectUrlTemplate *template.Template,
 	ssoRedirectUrlMacSigningKey interface{},
-	ssoRedirectUrlMacStrength sso_redirector.MacStrength,
+	ssoRedirectUrlMacStrength sso_redirector.HmacStrength,
 ) ErrorHandler {
 	return func(logger *log.Logger, w http.ResponseWriter, r *http.Request, err error) {
 		if ssoRedirectUrlTemplate == nil {
