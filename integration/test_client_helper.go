@@ -89,7 +89,7 @@ func BuildTestClient(certificate *jwt_certificate.Certificate, clientSecret stri
 		return nil, "", "", "", nil, nil, fmt.Errorf("certificate and client secret not specified, there is no way to sign request")
 	}
 
-	macStrength := sso_redirector.MacStrength_256
+	macStrength := sso_redirector.HmacStrength_256
 	err = sso_redirector.AddMacHashToUrl(expectedRedirectorUrl, privateKey, macStrength)
 	if err != nil {
 		return nil, "", "", "", nil, nil, err

@@ -15,7 +15,7 @@ func TestAddHashAndRemoveHashUsingClientSecretSuccess(t *testing.T) {
 	}
 
 	key := []byte("mySecret")
-	macStrength := MacStrength_256
+	macStrength := HmacStrength_256
 
 	err = AddMacHashToUrl(testUrl, key, macStrength)
 	if err != nil {
@@ -33,7 +33,7 @@ func TestAddHashAndRemoveHashUsingPrivateKeyAndPublicKeySuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	privateKey, err := test_utils.GetPrivateKeyFromPath("integration/fixtures/https/snitest.com", "integration/fixtures/https/snitest.com")
-	macStrength := MacStrength_256
+	macStrength := HmacStrength_256
 
 	err = AddMacHashToUrl(testUrl, privateKey, macStrength)
 	assert.NoError(t, err)
@@ -51,7 +51,7 @@ func TestAddHashAndRemoveHashUsingPrivateKeyOnlySuccess(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Printf("got privateKey no error\n")
 
-	macStrength := MacStrength_256
+	macStrength := HmacStrength_256
 
 	err = AddMacHashToUrl(testUrl, privateKey, macStrength)
 	assert.NoError(t, err)

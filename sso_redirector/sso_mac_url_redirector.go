@@ -1,10 +1,7 @@
 package sso_redirector
 
 import (
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"fmt"
-	jwtgo "github.com/taliesins/traefik-plugin-oidc/jwt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -48,8 +45,8 @@ func CloneUrl(r *http.Request) *url.URL {
 	return clonedUrl
 }
 
-func AddMacHashToUrl(url *url.URL, macSigningKey interface{}, macStrength MacStrength) error {
-	hash, err := signMac(url.String(), macSigningKey, macStrength)
+func AddMacHashToUrl(url *url.URL, macSigningKey interface{}, macStrength HmacStrength) error {
+	hash, err := signHmac(url.String(), macSigningKey, macStrength)
 	if err != nil {
 		return err
 	}
@@ -59,7 +56,7 @@ func AddMacHashToUrl(url *url.URL, macSigningKey interface{}, macStrength MacStr
 	return nil
 }
 
-func VerifyAndStripMacHashFromUrl(url *url.URL, macSigningKey interface{}, macStrength MacStrength) error {
+func VerifyAndStripMacHashFromUrl(url *url.URL, macSigningKey interface{}, macStrength HmacStrength) error {
 	query := url.Query()
 
 	signature := query.Get(HashQuerystringParameterName)
@@ -71,11 +68,11 @@ func VerifyAndStripMacHashFromUrl(url *url.URL, macSigningKey interface{}, macSt
 	q.Del(HashQuerystringParameterName)
 	url.RawQuery = q.Encode()
 
-	return verifyMac(url.String(), signature, macSigningKey, macStrength)
+	return verifyHmac(url.String(), signature, macSigningKey, macStrength)
 }
 
 // var redirectUrlTemplate = `https://{{.Host}}/oauth2/redirector?redirect_uri={{.Url}}&nonce={{.Nonce}}&iat={{.IssuedAt}}&hash={{.Hash}}`
-func GetRedirectorUrl(r *http.Request, macSigningKey interface{}, macStrength MacStrength, nonce string, issuedAt string) (*url.URL, error) {
+func GetRedirectorUrl(r *http.Request, macSigningKey interface{}, macStrength HmacStrength, nonce string, issuedAt string) (*url.URL, error) {
 	clonedUrl := CloneUrl(r)
 	redirectUrl := clonedUrl.String()
 	clonedUrl.Path = RedirectorPath
@@ -94,7 +91,7 @@ func GetRedirectorUrl(r *http.Request, macSigningKey interface{}, macStrength Ma
 	return clonedUrl, nil
 }
 
-func GetRedirectUrl(r *http.Request, macSigningKey interface{}, macStrength MacStrength, allowedClockSkew time.Duration) (*url.URL, error) {
+func GetRedirectUrl(r *http.Request, macSigningKey interface{}, macStrength HmacStrength, allowedClockSkew time.Duration) (*url.URL, error) {
 	clonedUrl := CloneUrl(r)
 
 	err := VerifyAndStripMacHashFromUrl(clonedUrl, macSigningKey, macStrength)
@@ -143,140 +140,4 @@ func GetRedirectUrl(r *http.Request, macSigningKey interface{}, macStrength MacS
 	}
 
 	return redirectUri, nil
-}
-
-func signMac(signingString string, macSigningKey interface{}, macStrength MacStrength) (string, error) {
-	switch privateKeyType := macSigningKey.(type) {
-	case *rsa.PrivateKey:
-		{
-			var rsaMacSigningKey *rsa.PrivateKey
-			rsaMacSigningKey = macSigningKey.(*rsa.PrivateKey)
-
-			length := rsaMacSigningKey.N.BitLen() / 8
-
-			switch length {
-			case 256:
-				signed, err := jwtgo.SigningMethodRS256.Sign(signingString, rsaMacSigningKey)
-				return signed, err
-			case 384:
-				return jwtgo.SigningMethodRS384.Sign(signingString, macSigningKey)
-			case 512:
-				return jwtgo.SigningMethodRS512.Sign(signingString, macSigningKey)
-			default:
-				return "", fmt.Errorf("unsupported mac signing method strength %T", length)
-			}
-		}
-	case *ecdsa.PrivateKey:
-		{
-			fmt.Printf("start sign ecdsa\n")
-
-			length := macSigningKey.(*ecdsa.PrivateKey).Curve.Params().BitSize
-
-			switch length {
-			case 256:
-				return jwtgo.SigningMethodES256.Sign(signingString, macSigningKey)
-			case 384:
-				return jwtgo.SigningMethodES384.Sign(signingString, macSigningKey)
-			case 521:
-				return jwtgo.SigningMethodES512.Sign(signingString, macSigningKey)
-			default:
-				return "", fmt.Errorf("unsupported mac signing method strength %T", length)
-			}
-		}
-	case []byte:
-		{
-			fmt.Printf("start sign byte\n")
-			switch macStrength {
-			case MacStrength_256:
-				return jwtgo.SigningMethodHS256.Sign(signingString, macSigningKey)
-			case MacStrength_384:
-				return jwtgo.SigningMethodHS384.Sign(signingString, macSigningKey)
-			case MacStrength_512:
-				return jwtgo.SigningMethodHS512.Sign(signingString, macSigningKey)
-			default:
-				return "", fmt.Errorf("unsupported mac signing method strength %T", macStrength)
-			}
-		}
-	default:
-		fmt.Printf("start sign default\n")
-		return "", fmt.Errorf("unsupported mac signing key type %T", privateKeyType)
-	}
-}
-
-func verifyMac(signingString string, signature string, macSigningKey interface{}, macStrength MacStrength) error {
-	switch publicKeyType := macSigningKey.(type) {
-	case *rsa.PrivateKey:
-		{
-			length := macSigningKey.(*rsa.PrivateKey).N.BitLen() / 8
-			switch length {
-			case 256:
-				return jwtgo.SigningMethodRS256.Verify(signingString, signature, &publicKeyType.PublicKey)
-			case 384:
-				return jwtgo.SigningMethodRS384.Verify(signingString, signature, &publicKeyType.PublicKey)
-			case 512:
-				return jwtgo.SigningMethodRS512.Verify(signingString, signature, &publicKeyType.PublicKey)
-			default:
-				return fmt.Errorf("unsupported mac signing method strength %T", length)
-			}
-		}
-	case *ecdsa.PrivateKey:
-		{
-			length := macSigningKey.(*ecdsa.PrivateKey).Curve.Params().BitSize
-
-			switch length {
-			case 256:
-				return jwtgo.SigningMethodES256.Verify(signingString, signature, &publicKeyType.PublicKey)
-			case 384:
-				return jwtgo.SigningMethodES384.Verify(signingString, signature, &publicKeyType.PublicKey)
-			case 521:
-				return jwtgo.SigningMethodES512.Verify(signingString, signature, &publicKeyType.PublicKey)
-			default:
-				return fmt.Errorf("unsupported mac signing method strength %T", length)
-			}
-		}
-	case *rsa.PublicKey:
-		{
-			length := macSigningKey.(*rsa.PublicKey).N.BitLen() / 8
-			switch length {
-			case 256:
-				return jwtgo.SigningMethodRS256.Verify(signingString, signature, publicKeyType)
-			case 384:
-				return jwtgo.SigningMethodRS384.Verify(signingString, signature, publicKeyType)
-			case 512:
-				return jwtgo.SigningMethodRS512.Verify(signingString, signature, publicKeyType)
-			default:
-				return fmt.Errorf("unsupported mac signing method strength %T", length)
-			}
-		}
-	case *ecdsa.PublicKey:
-		{
-			length := macSigningKey.(*ecdsa.PublicKey).Curve.Params().BitSize
-
-			switch length {
-			case 256:
-				return jwtgo.SigningMethodES256.Verify(signingString, signature, publicKeyType)
-			case 384:
-				return jwtgo.SigningMethodES384.Verify(signingString, signature, publicKeyType)
-			case 521:
-				return jwtgo.SigningMethodES512.Verify(signingString, signature, publicKeyType)
-			default:
-				return fmt.Errorf("unsupported mac signing method strength %T", length)
-			}
-		}
-	case []byte:
-		{
-			switch macStrength {
-			case MacStrength_256:
-				return jwtgo.SigningMethodHS256.Verify(signingString, signature, macSigningKey)
-			case MacStrength_384:
-				return jwtgo.SigningMethodHS384.Verify(signingString, signature, macSigningKey)
-			case MacStrength_512:
-				return jwtgo.SigningMethodHS512.Verify(signingString, signature, macSigningKey)
-			default:
-				return fmt.Errorf("unsupported mac signing method strength %T", macStrength)
-			}
-		}
-	default:
-		return fmt.Errorf("unsupported mac signing key type %T", publicKeyType)
-	}
 }

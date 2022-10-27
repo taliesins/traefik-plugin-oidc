@@ -18,11 +18,11 @@ import (
 )
 
 type Config struct {
-	SsoRedirectUrlAddressTemplate     string                     `json:"SsoRedirectUrlAddressTemplate,omitempty"`
-	SsoRedirectUrlMacClientSecret     string                     `json:"ssoRedirectUrlMacClientSecret,omitempty"`
-	SsoRedirectUrlMacPrivateKey       string                     `json:"ssoRedirectUrlMacPrivateKey,omitempty"`
-	SsoRedirectUrlMacStrength         sso_redirector.MacStrength `json:"ssoRedirectUrlMacStrength,omitempty"`
-	SsoRedirectUrlMacAllowedClockSkew time.Duration              `json:"ssoRedirectUrlMacAllowedClockSkew,omitempty"`
+	SsoRedirectUrlAddressTemplate     string                      `json:"SsoRedirectUrlAddressTemplate,omitempty"`
+	SsoRedirectUrlMacClientSecret     string                      `json:"ssoRedirectUrlMacClientSecret,omitempty"`
+	SsoRedirectUrlMacPrivateKey       string                      `json:"ssoRedirectUrlMacPrivateKey,omitempty"`
+	SsoRedirectUrlMacStrength         sso_redirector.HmacStrength `json:"ssoRedirectUrlMacStrength,omitempty"`
+	SsoRedirectUrlMacAllowedClockSkew time.Duration               `json:"ssoRedirectUrlMacAllowedClockSkew,omitempty"`
 
 	ClientSecret         string `json:"clientSecret,omitempty"`
 	PublicKey            string `json:"publicKey,omitempty"`
@@ -47,7 +47,7 @@ type Config struct {
 func CreateConfig() *Config {
 	return &Config{
 		SsoRedirectUrlAddressTemplate:     "",
-		SsoRedirectUrlMacStrength:         sso_redirector.MacStrength_256,
+		SsoRedirectUrlMacStrength:         sso_redirector.HmacStrength_256,
 		SsoRedirectUrlMacClientSecret:     "",
 		SsoRedirectUrlMacPrivateKey:       "",
 		SsoRedirectUrlMacAllowedClockSkew: time.Minute * 30,
