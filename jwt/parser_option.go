@@ -9,14 +9,14 @@ type ParserOption func(*Parser)
 // It is heavily encouraged to use this option in order to prevent attacks such as https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/.
 func WithValidMethods(methods []string) ParserOption {
 	return func(p *Parser) {
-		p.ValidMethods = methods
+		p.validMethods = methods
 	}
 }
 
 // WithJSONNumber is an option to configure the underlying JSON parser with UseNumber
 func WithJSONNumber() ParserOption {
 	return func(p *Parser) {
-		p.UseJSONNumber = true
+		p.useJSONNumber = true
 	}
 }
 
@@ -24,6 +24,6 @@ func WithJSONNumber() ParserOption {
 // what you are doing.
 func WithoutClaimsValidation() ParserOption {
 	return func(p *Parser) {
-		p.SkipClaimsValidation = true
+		p.skipClaimsValidation = true
 	}
 }
