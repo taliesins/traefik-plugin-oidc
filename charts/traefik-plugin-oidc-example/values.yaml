@@ -117,11 +117,713 @@ keycloak:
     enabled: true
     hostname: keycloak.localhost
   keycloakConfigCli:
-    enabled: enable
-    config:
-      default:
-        file: files/default-realm.json
-    #config:    
+    enabled: true
+    command:
+      - java
+      - -jar
+      - /opt/bitnami/keycloak-config-cli/keycloak-config-cli.jar
+    createConfigmap: true
+    configuration:
+      benchmark.yaml:
+        realm: "whoami"
+        displayName: "whoami Realm"
+        enabled: true
+
+        roles:
+          realm:
+            - name: role1
+            - name: role2
+          client:
+            whoami-middleware-oidc-keycloak:
+              - name: whoami-middleware-oidc-keycloak-role
+                description: "whoami-middleware-oidc-keycloak-role Role"
+                composite: false
+                clientRole: true
+        defaultRoles:
+          - uma_authorization
+          - offline_access
+        scopeMappings:
+          - client: whoami-middleware-oidc-keycloak
+            roles:
+              - role1
+              - role2
+
+        clients:
+          - clientId: whoami-middleware-oidc-keycloak
+            name: whoami-middleware-oidc-keycloak
+            description: "whoami-middleware-oidc-keycloak"
+            surrogateAuthRequired: false
+            enabled: true
+            redirectUris:
+              - "*"
+            webOrigins:
+              - "*"
+            notBefore: 0
+            bearerOnly: false
+            consentRequired: false
+            standardFlowEnabled: true
+            implicitFlowEnabled: true
+            directAccessGrantsEnabled: true
+            serviceAccountsEnabled: true
+            publicClient: true
+            frontchannelLogout: false
+            protocol: openid-connect
+            attributes: { }
+            fullScopeAllowed: false
+            nodeReRegistrationTimeout: -1
+            protocolMappers:
+              - name: "RoleMapper whoami-middleware-oidc-keycloak-read-only"
+                protocol: openid-connect
+                protocolMapper: oidc-role-name-mapper
+                consentRequired: false
+                config:
+                  new.role.name: whoami-middleware-oidc-keycloak-read-only
+                  role: whoami-middleware-oidc-keycloak-test-read-only
+              - name: "PropertyMapper family name"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: lastName
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: family_name
+                  jsonType.label: String
+              - name: "RoleMapper whoami-middleware-oidc-keycloak-standard"
+                protocol: openid-connect
+                protocolMapper: oidc-role-name-mapper
+                consentRequired: false
+                config:
+                  new.role.name: whoami-middleware-oidc-keycloak-standard
+                  role: whoami-middleware-oidc-keycloak-test-standard
+              - name: "RoleMapper whoami-middleware-oidc-keycloak-lead"
+                protocol: openid-connect
+                protocolMapper: oidc-role-name-mapper
+                consentRequired: false
+                config:
+                  new.role.name: whoami-middleware-oidc-keycloak-lead
+                  role: whoami-middleware-oidc-keycloak-test-lead
+              - name: "Client IP Address"
+                protocol: openid-connect
+                protocolMapper: oidc-usersessionmodel-note-mapper
+                consentRequired: false
+                config:
+                  user.session.note: clientAddress
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: clientAddress
+                  jsonType.label: String
+              - name: "RoleMapper whoami-middleware-oidc-keycloak-test"
+                protocol: openid-connect
+                protocolMapper: oidc-role-name-mapper
+                consentRequired: false
+                config:
+                  new.role.name: whoami-middleware-oidc-keycloak-test
+                  role: whoami-middleware-oidc-keycloak-test-test
+              - name: "PropertyMapper email"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: email
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: email
+                  jsonType.label: String
+              - name: "Client ID"
+                protocol: openid-connect
+                protocolMapper: oidc-usersessionmodel-note-mapper
+                consentRequired: false
+                config:
+                  user.session.note: clientId
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: clientId
+                  jsonType.label: String
+              - name: "PropertyMapper full name"
+                protocol: openid-connect
+                protocolMapper: oidc-full-name-mapper
+                config:
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+              - name: "PropertyMapper given name"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: firstName
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: given_name
+                  jsonType.label: String
+              - name: "RoleMapper whoami-middleware-oidc-keycloak-batch"
+                protocol: openid-connect
+                protocolMapper: oidc-role-name-mapper
+                consentRequired: false
+                config:
+                  new.role.name: whoami-middleware-oidc-keycloak-batch
+                  role: whoami-middleware-oidc-keycloak-test-batch
+              - name: "Client Host"
+                protocol: openid-connect
+                protocolMapper: oidc-usersessionmodel-note-mapper
+                consentRequired: false
+                config:
+                  user.session.note: clientHost
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: clientHost
+                  jsonType.label: String
+              - name: "PropertyMapper username"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: username
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: preferred_username
+                  jsonType.label: String
+              - name: "RoleMapper whoami-middleware-oidc-keycloak-tech"
+                protocol: openid-connect
+                protocolMapper: oidc-role-name-mapper
+                consentRequired: false
+                config:
+                  new.role.name: whoami-middleware-oidc-keycloak-tech
+                  role: whoami-middleware-oidc-keycloak-test-tech
+
+        clientScopes:
+          - name: offline_access
+            description: "OpenID Connect built-in scope: offline_access"
+            protocol: openid-connect
+            attributes:
+              consent.screen.text: "${offlineAccessScopeConsentText}"
+              display.on.consent.screen: "true"
+          - name: role_list
+            description: "SAML role list"
+            protocol: saml
+            attributes:
+              consent.screen.text: "${samlRoleListScopeConsentText}"
+              display.on.consent.screen: "true"
+            protocolMappers:
+              - name: "role list"
+                protocol: saml
+                protocolMapper: saml-role-list-mapper
+                consentRequired: false
+                config:
+                  single: "false"
+                  attribute.nameformat: Basic
+                  attribute.name: Role
+          - name: profile
+            description: "OpenID Connect built-in scope: profile"
+            protocol: openid-connect
+            attributes:
+              include.in.token.scope: "true"
+              display.on.consent.screen: "true"
+              consent.screen.text: "${profileScopeConsentText}"
+            protocolMappers:
+              - name: birthdate
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: birthdate
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: birthdate
+                  jsonType.label: String
+              - name: profile
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: profile
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: profile
+                  jsonType.label: String
+              - name: "family name"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: lastName
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: family_name
+                  jsonType.label: String
+              - name: username
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: username
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: preferred_username
+                  jsonType.label: String
+              - name: gender
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: gender
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: gender
+                  jsonType.label: String
+              - name: "middle name"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: middleName
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: middle_name
+                  jsonType.label: String
+              - name: "full name"
+                protocol: openid-connect
+                protocolMapper: oidc-full-name-mapper
+                consentRequired: false
+                config:
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  userinfo.token.claim: "true"
+              - name: website
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: website
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: website
+                  jsonType.label: String
+              - name: picture
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: picture
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: picture
+                  jsonType.label: String
+              - name: zoneinfo
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: zoneinfo
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: zoneinfo
+                  jsonType.label: String
+              - name: "updated at"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: updatedAt
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: updated_at
+                  jsonType.label: String
+              - name: "given name"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: firstName
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: given_name
+                  jsonType.label: String
+              - name: nickname
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: nickname
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: nickname
+                  jsonType.label: String
+              - name: locale
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: locale
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: locale
+                  jsonType.label: String
+          - name: email
+            description: "OpenID Connect built-in scope: email"
+            protocol: openid-connect
+            attributes:
+              include.in.token.scope: "true"
+              display.on.consent.screen: "true"
+              consent.screen.text: "${emailScopeConsentText}"
+            protocolMappers:
+              - name: "email verified"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: emailVerified
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: email_verified
+                  jsonType.label: boolean
+              - name: email
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: email
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: email
+                  jsonType.label: String
+          - name: address
+            description: "OpenID Connect built-in scope: address"
+            protocol: openid-connect
+            attributes:
+              include.in.token.scope: "true"
+              display.on.consent.screen: "true"
+              consent.screen.text: "${addressScopeConsentText}"
+            protocolMappers:
+              - name: address
+                protocol: openid-connect
+                protocolMapper: oidc-address-mapper
+                consentRequired: false
+                config:
+                  user.attribute.formatted: formatted
+                  user.attribute.country: country
+                  user.attribute.postal_code: postal_code
+                  userinfo.token.claim: "true"
+                  user.attribute.street: street
+                  id.token.claim: "true"
+                  user.attribute.region: region
+                  access.token.claim: "true"
+                  user.attribute.locality: locality
+          - name: phone
+            description: "OpenID Connect built-in scope: phone"
+            protocol: openid-connect
+            attributes:
+              include.in.token.scope: "true"
+              display.on.consent.screen: "true"
+              consent.screen.text: "${phoneScopeConsentText}"
+            protocolMappers:
+              - name: "phone number"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: phoneNumber
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: phone_number
+                  jsonType.label: String
+              - name: "phone number verified"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-attribute-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: phoneNumberVerified
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: phone_number_verified
+                  jsonType.label: boolean
+          - name: roles
+            description: "OpenID Connect scope for add user roles to the access token"
+            protocol: openid-connect
+            attributes:
+              include.in.token.scope: "false"
+              display.on.consent.screen: "true"
+              consent.screen.text: "${rolesScopeConsentText}"
+            protocolMappers:
+              - name: "audience resolve"
+                protocol: openid-connect
+                protocolMapper: oidc-audience-resolve-mapper
+                consentRequired: false
+                config: { }
+              - name: "client roles"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-client-role-mapper
+                consentRequired: false
+                config:
+                  multivalued: "true"
+                  user.attribute: foo
+                  access.token.claim: "true"
+                  claim.name: "resource_access.${client_id}.roles"
+                  jsonType.label: String
+              - name: "realm roles"
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-realm-role-mapper
+                consentRequired: false
+                config:
+                  multivalued: "true"
+                  user.attribute: foo
+                  access.token.claim: "true"
+                  claim.name: realm_access.roles
+                  jsonType.label: String
+          - name: microprofile-jwt
+            description: "Microprofile - JWT built-in scope"
+            protocol: openid-connect
+            attributes:
+              include.in.token.scope: "true"
+              display.on.consent.screen: "false"
+            protocolMappers:
+              - name: upn
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: username
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: upn
+                  jsonType.label: String
+              - name: groups
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-realm-role-mapper
+                consentRequired: false
+                config:
+                  multivalued: "true"
+                  user.attribute: foo
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: groups
+                  jsonType.label: String
+          - name: web-origins
+            description: "OpenID Connect scope for add allowed web origins to the access token"
+            protocol: openid-connect
+            attributes:
+              include.in.token.scope: "false"
+              display.on.consent.screen: "false"
+              consent.screen.text: ""
+            protocolMappers:
+              - name: "allowed web origins"
+                protocol: openid-connect
+                protocolMapper: oidc-allowed-origins-mapper
+                consentRequired: false
+                config: { }
+          - name: example-email
+            description: "OpenID Connect examplecustom scope: email"
+            protocol: openid-connect
+            attributes:
+              include.in.token.scope: "true"
+              display.on.consent.screen: "true"
+              consent.screen.text: "${emailScopeConsentText}"
+            protocolMappers:
+              - name: email
+                protocol: openid-connect
+                protocolMapper: oidc-usermodel-property-mapper
+                consentRequired: false
+                config:
+                  userinfo.token.claim: "true"
+                  user.attribute: email
+                  id.token.claim: "true"
+                  access.token.claim: "true"
+                  claim.name: email
+                  jsonType.label: String
+        defaultDefaultClientScopes:
+          - profile
+          - example-email
+          - roles
+          - web-origins
+        defaultOptionalClientScopes:
+          - offline_access
+          - address
+          - phone
+          - microprofile-jwt
+        components:
+          org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy:
+            - name: "Allowed Client Scopes"
+              providerId: allowed-client-templates
+              subType: authenticated
+              subComponents: { }
+              config:
+                allow-default-scopes:
+                  - "true"
+            - name: "Trusted Hosts"
+              providerId: trusted-hosts
+              subType: anonymous
+              subComponents: { }
+              config:
+                host-sending-registration-request-must-match:
+                  - "true"
+                client-uris-must-match:
+                  - "true"
+            - name: "Allowed Protocol Mapper Types"
+              providerId: allowed-protocol-mappers
+              subType: anonymous
+              subComponents: { }
+              config:
+                allowed-protocol-mapper-types:
+                  - oidc-usermodel-attribute-mapper
+                  - oidc-sha256-pairwise-sub-mapper
+                  - saml-user-attribute-mapper
+                  - oidc-full-name-mapper
+                  - saml-user-property-mapper
+                  - oidc-usermodel-property-mapper
+                  - saml-role-list-mapper
+                  - oidc-address-mapper
+            - name: "Consent Required"
+              providerId: consent-required
+              subType: anonymous
+              subComponents: { }
+              config: { }
+            - name: "Full Scope Disabled"
+              providerId: scope
+              subType: anonymous
+              subComponents: { }
+              config: { }
+            - name: "Max Clients Limit"
+              providerId: max-clients
+              subType: anonymous
+              subComponents: { }
+              config:
+                max-clients:
+                  - "200"
+            - name: "Allowed Protocol Mapper Types"
+              providerId: allowed-protocol-mappers
+              subType: authenticated
+              subComponents: { }
+              config:
+                allowed-protocol-mapper-types:
+                  - oidc-usermodel-property-mapper
+                  - oidc-usermodel-attribute-mapper
+                  - saml-role-list-mapper
+                  - saml-user-attribute-mapper
+                  - saml-user-property-mapper
+                  - oidc-full-name-mapper
+                  - oidc-address-mapper
+                  - oidc-sha256-pairwise-sub-mapper
+            - name: "Allowed Client Scopes"
+              providerId: allowed-client-templates
+              subType: anonymous
+              subComponents: { }
+              config:
+                allow-default-scopes:
+                  - "true"
+
+          org.keycloak.keys.KeyProvider:
+            - name: aes-generated
+              providerId: aes-generated
+              subComponents: { }
+              config:
+                priority:
+                  - "100"
+            - name: hmac-generated
+              providerId: hmac-generated
+              subComponents: { }
+              config:
+                active:
+                  - "true"
+                secretSize:
+                  - "512"
+                priority:
+                  - "0"
+                enabled:
+                  - "true"
+            - name: rsa-generated
+              providerId: rsa-generated
+              subComponents: { }
+              config:
+                keySize:
+                  - "4096"
+                active:
+                  - "true"
+                priority:
+                  - "0"
+                enabled:
+                  - "true"
+
+        users:
+          - username: user0
+            enabled: true
+            email: user0@example.local
+            firstName: User
+            lastName: 0
+            attributes:
+              locale:
+                - "de"
+            credentials:
+              - type: password
+                value: password
+                temporary: false
+            realmRoles:
+              - role1
+              - role2
+          - username: user1
+            enabled: true
+            email: user1@example.local
+            firstName: User
+            lastName: 1
+            attributes:
+              locale:
+                - "de"
+            credentials:
+              - type: password
+                value: password
+                temporary: false
+            realmRoles:
+              - role1
+          - username: user2
+            enabled: true
+            email: user2@example.local
+            firstName: User
+            lastName: 2
+            attributes:
+              locale:
+                - "de"
+            credentials:
+              - type: password
+                value: password
+                temporary: false
+            realmRoles:
+              - role2
+
+        groups:
+          - name: group1
+            attributes:
+              example:
+                - attribute
+            realmRoles:
+              - role1
+            subGroups:
+              - name: sub-group1
+                attributes:
+                  sub-example:
+                    - attribute
+                clientRoles:
+                  whoami-middleware-oidc-keycloak: [ "whoami-middleware-oidc-keycloak-role" ]
+
+
+
+    #config:
     # <realm name>:
     #   inline:
     #     realm: <realm name>
