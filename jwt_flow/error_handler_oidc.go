@@ -2,16 +2,17 @@ package jwt_flow
 
 import (
 	"fmt"
-	guuid "github.com/google/uuid"
-	"github.com/taliesins/traefik-plugin-oidc/log"
-	"github.com/taliesins/traefik-plugin-oidc/log/encoder"
-	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
+
+	guuid "github.com/google/uuid"
+	"github.com/taliesins/traefik-plugin-oidc/log"
+	"github.com/taliesins/traefik-plugin-oidc/log/encoder"
+	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
 )
 
 // OidcErrorHandler is the oidc error handler implementation for the
@@ -22,7 +23,9 @@ func OidcErrorHandler(
 	ssoRedirectUrlMacStrength sso_redirector.HmacStrength,
 ) ErrorHandler {
 	return func(logger *log.Logger, w http.ResponseWriter, r *http.Request, err error) {
+
 		if ssoRedirectUrlTemplate == nil {
+			//TODO YAEGI failing
 			logger.Debug("No ssoRedirectUrlTemplate specified")
 			http.Error(w, "", http.StatusUnauthorized)
 			return

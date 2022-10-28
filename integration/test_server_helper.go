@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
+	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 )
 
 func getJsonWebset(certificate *jwt_certificate.Certificate) (*jwt_certificate.JSONWebKeySet, error) {
@@ -60,7 +61,7 @@ func BuildTestJwkServer(publicKeyRootPath string, privateKeyRootPath string, oid
 	if err != nil {
 		return nil, nil, err
 	}
-
+	//TODO
 	jsonWebKeySetJson, err := json.Marshal(jsonWebKeySet)
 	if err != nil {
 		return nil, nil, err
