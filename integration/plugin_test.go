@@ -2,13 +2,6 @@ package integration
 
 import (
 	"fmt"
-	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/assert"
-	jwtgo "github.com/taliesins/traefik-plugin-oidc/jwt"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
-	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
-	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 	"io"
 	"net/http"
 	"net/url"
@@ -18,6 +11,14 @@ import (
 	"testing"
 	htmlTemplate "text/template"
 	"time"
+
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/assert"
+	jwtgo "github.com/taliesins/traefik-plugin-oidc/jwt"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
+	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
+	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 )
 
 // *****************  Authorization Header Test
