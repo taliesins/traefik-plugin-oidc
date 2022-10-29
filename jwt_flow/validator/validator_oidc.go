@@ -91,7 +91,7 @@ func OidcTokenValidator(
 				// err := token.UnsafeClaimsWithoutVerification(unsafeClaimsWithoutVerification)
 				err := token.Claims.Valid()
 				if err == nil {
-					currentIssuer = token.Claims.(jwt.RegisteredClaims).Issuer
+					currentIssuer = token.Claims.(*jwt.RegisteredClaims).Issuer
 					if issuer != "" && currentIssuer != issuer {
 						return nil, fmt.Errorf("failed validation on %s claim as value is %s", "iss", currentIssuer)
 					}
