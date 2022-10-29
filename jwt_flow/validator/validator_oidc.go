@@ -46,7 +46,7 @@ func OidcTokenValidator(
 		// 	return nil, err
 		// }
 		//Here parse will do all the stuff
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 			currentAlgorithm := token.Method.Alg()
 			currentKeyId := ""
 			if token.Header["kid"] != nil {
@@ -131,7 +131,7 @@ func validateClaims(err error, token *jwt.Token, issuerValidationRegex *regexp.R
 		return nil, fmt.Errorf("could not get token claims: %w", err)
 	}
 	//TODO token does not contains the registered claims, cast is failing
-	registeredClaims := token.Claims.(jwt.RegisteredClaims)
+	registeredClaims := token.Claims.(*jwt.RegisteredClaims)
 
 	if issuerValidationRegex != nil && !issuerValidationRegex.MatchString(registeredClaims.Issuer) {
 		return nil, jwt.ErrTokenInvalidIssuer
