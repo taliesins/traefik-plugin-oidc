@@ -58,6 +58,6 @@ func ParseECPublicKeyFromPEM(key []byte) (*ecdsa.PublicKey, error) {
 
 	var pkey *ecdsa.PublicKey
 	pkey = parsedKey.(*ecdsa.PublicKey)
-	
+
 	return pkey, nil
 }

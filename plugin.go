@@ -96,30 +96,30 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 	// Parse config
 	if config.UseDynamicValidation == true && (config.Issuer == "" && config.IssuerValidationRegex == "") {
-		logger.Warn("DANGER DANGER DANGER when 'UseDynamicValidation' = 'true' and 'Issuer' = '' and 'IssuerValidationRegex' = '', then tokens from any IdP will be trusted - this is an insecure configuration DANGER DANGER DANGER")
+		logger.Warn("DANGER DANGER DANGER when 'UseDynamicValidation' = 'true' and 'Issuer' = '' and 'IssuerValidationRegex' = '', then tokens from any IdP will be trusted - this is an insecure configuration DANGER DANGER DANGER", nil)
 	}
 
 	if config.SsoRedirectUrlMacClientSecret == "" && config.SsoRedirectUrlMacPrivateKey == "" && config.SsoRedirectUrlAddressTemplate != "" {
 		err = fmt.Errorf("config value 'SsoRedirectUrlMacPrivateKey' or 'SsoRedirectUrlMacClientSecret' must be set if config value 'SsoRedirectUrlAddressTemplate' is specified")
-		logger.Fatal("Unable to parse config", encoder.Error(err))
+		logger.Fatal("Unable to parse config", []encoder.Field{encoder.Error(err)})
 		return nil, err
 	}
 
 	if config.Issuer == "" && config.Audience == "" && config.JwksAddress == "" && config.OidcDiscoveryAddress == "" && config.UseDynamicValidation == false && config.ClientSecret == "" && config.SsoRedirectUrlMacPrivateKey == "" && config.SsoRedirectUrlMacClientSecret == "" && config.PublicKey == "" {
 		err = fmt.Errorf("configuration must be set")
-		logger.Fatal("Unable to parse config", encoder.Error(err))
+		logger.Fatal("Unable to parse config", []encoder.Field{encoder.Error(err)})
 		return nil, err
 	}
 
 	if !(config.ClientSecret != "" || config.PublicKey != "" || config.OidcDiscoveryAddress != "" || config.JwksAddress != "" || (config.Issuer != "" && config.UseDynamicValidation == true)) && config.Audience != "" {
 		err = fmt.Errorf("config value 'ClientSecret' or 'PublicKey' or 'OidcDiscoveryAddress' or 'JwksAddress' or 'Issuer' with UseDynamicValidation enabled, if config value 'Audience' is specified")
-		logger.Fatal("Unable to parse config", encoder.Error(err))
+		logger.Fatal("Unable to parse config", []encoder.Field{encoder.Error(err)})
 		return nil, err
 	}
 
 	if (config.ClientSecret == "" && config.PublicKey == "") && !(config.OidcDiscoveryAddress != "" || config.JwksAddress != "" || (config.Issuer != "" && config.UseDynamicValidation == true)) && config.SsoRedirectUrlAddressTemplate != "" {
 		err = fmt.Errorf("'OidcDiscoveryAddress' or 'JwksAddress' or 'Issuer' with UseDynamicValidation enabled, if config value 'SsoRedirectUrlAddressTemplate' is specified and 'ClientSecret' and 'PublicKey' have not been configured")
-		logger.Fatal("Unable to parse config", encoder.Error(err))
+		logger.Fatal("Unable to parse config", []encoder.Field{encoder.Error(err)})
 		return nil, err
 	}
 
@@ -128,7 +128,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.SsoRedirectUrlAddressTemplate != "" {
 		ssoRedirectUrlAddressTemplate, err = sso_redirector.GetSsoRedirectUrlTemplate(config.SsoRedirectUrlAddressTemplate)
 		if err != nil {
-			logger.Fatal("Unable to parse config SsoRedirectUrlAddressTemplate", encoder.Error(err), encoder.String("SsoRedirectUrlAddressTemplate", config.SsoRedirectUrlAddressTemplate))
+			logger.Fatal("Unable to parse config SsoRedirectUrlAddressTemplate", []encoder.Field{encoder.Error(err), encoder.String("SsoRedirectUrlAddressTemplate", config.SsoRedirectUrlAddressTemplate)})
 			return nil, err
 		}
 	} else {
@@ -148,7 +148,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.SsoRedirectUrlMacPrivateKey != "" {
 		urlHashPrivateKey, _, err = jwks.GetPrivateKeyFromFileOrContent(config.SsoRedirectUrlMacPrivateKey)
 		if err != nil {
-			logger.Fatal("Unable to parse config SsoRedirectUrlMacPrivateKey", encoder.Error(err))
+			logger.Fatal("Unable to parse config SsoRedirectUrlMacPrivateKey", []encoder.Field{encoder.Error(err)})
 			return nil, err
 		}
 	} else {
@@ -177,7 +177,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.PublicKey != "" {
 		publicKey, _, err = jwks.GetPublicKeyFromFileOrContent(config.PublicKey)
 		if err != nil {
-			logger.Fatal("Unable to parse config PublicKey", encoder.Error(err), encoder.String("PublicKey", config.PublicKey))
+			logger.Fatal("Unable to parse config PublicKey", []encoder.Field{encoder.Error(err), encoder.String("PublicKey", config.PublicKey)})
 			return nil, err
 		}
 	} else {
@@ -189,7 +189,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.AlgorithmValidationRegex != "" {
 		algorithmValidationRegex, err = regexp.Compile(config.AlgorithmValidationRegex)
 		if err != nil {
-			logger.Fatal("Unable to parse config AlgorithmValidationRegex", encoder.Error(err), encoder.String("AlgorithmValidationRegex", config.AlgorithmValidationRegex))
+			logger.Fatal("Unable to parse config AlgorithmValidationRegex", []encoder.Field{encoder.Error(err), encoder.String("AlgorithmValidationRegex", config.AlgorithmValidationRegex)})
 			return nil, err
 		}
 	} else {
@@ -200,7 +200,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.IssuerValidationRegex != "" {
 		issuerValidationRegex, err = regexp.Compile(config.IssuerValidationRegex)
 		if err != nil {
-			logger.Fatal("Unable to parse config IssuerValidationRegex", encoder.Error(err), encoder.String("IssuerValidationRegex", config.IssuerValidationRegex))
+			logger.Fatal("Unable to parse config IssuerValidationRegex", []encoder.Field{encoder.Error(err), encoder.String("IssuerValidationRegex", config.IssuerValidationRegex)})
 			return nil, err
 		}
 	} else {
@@ -211,7 +211,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.AudienceValidationRegex != "" {
 		audienceValidationRegex, err = regexp.Compile(config.AudienceValidationRegex)
 		if err != nil {
-			logger.Fatal("Unable to parse config AudienceValidationRegex", encoder.Error(err), encoder.String("AudienceValidationRegex", config.AudienceValidationRegex))
+			logger.Fatal("Unable to parse config AudienceValidationRegex", []encoder.Field{encoder.Error(err), encoder.String("AudienceValidationRegex", config.AudienceValidationRegex)})
 			return nil, err
 		}
 	} else {
@@ -222,7 +222,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.SubjectValidationRegex != "" {
 		subjectValidationRegex, err = regexp.Compile(config.SubjectValidationRegex)
 		if err != nil {
-			logger.Fatal("Unable to parse config SubjectValidationRegex", encoder.Error(err), encoder.String("SubjectValidationRegex", config.SubjectValidationRegex))
+			logger.Fatal("Unable to parse config SubjectValidationRegex", []encoder.Field{encoder.Error(err), encoder.String("SubjectValidationRegex", config.SubjectValidationRegex)})
 			return nil, err
 		}
 	} else {
@@ -233,7 +233,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.IdValidationRegex != "" {
 		idValidationRegex, err = regexp.Compile(config.IdValidationRegex)
 		if err != nil {
-			logger.Fatal("Unable to parse config IdValidationRegex", encoder.Error(err), encoder.String("IdValidationRegex", config.IdValidationRegex))
+			logger.Fatal("Unable to parse config IdValidationRegex", []encoder.Field{encoder.Error(err), encoder.String("IdValidationRegex", config.IdValidationRegex)})
 			return nil, err
 		}
 	} else {
@@ -245,7 +245,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if config.IgnorePathRegex != "" {
 		ignorePathRegex, err = regexp.Compile(config.IgnorePathRegex)
 		if err != nil {
-			logger.Fatal("Unable to parse config IgnorePathRegex", encoder.Error(err), encoder.String("IgnorePathRegex", config.IgnorePathRegex))
+			logger.Fatal("Unable to parse config IgnorePathRegex", []encoder.Field{encoder.Error(err), encoder.String("IgnorePathRegex", config.IgnorePathRegex)})
 			return nil, err
 		}
 	} else {
@@ -294,8 +294,8 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 const LogFieldRequestID = "requestID"
 
 func (a *Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	requestId := guuid.NewString()                                                  //TODO: see if we can plugin to tracing plugins like jaeger/zipkin to get the tracing id. See  https://doc.traefik.io/traefik/observability/tracing/overview/
-	loggerForRequest := a.logger.With(encoder.String(LogFieldRequestID, requestId)) // it is a clone of the parent logger with the same properties but any additional changes will not be propagated to parent
+	requestId := guuid.NewString()                                                                   //TODO: see if we can plugin to tracing plugins like jaeger/zipkin to get the tracing id. See  https://doc.traefik.io/traefik/observability/tracing/overview/
+	loggerForRequest := a.logger.With([]encoder.Field{encoder.String(LogFieldRequestID, requestId)}) // it is a clone of the parent logger with the same properties but any additional changes will not be propagated to parent
 	a.flow(loggerForRequest, rw, req)
 	loggerForRequest.Sync()
 }
