@@ -30,7 +30,7 @@ func AuthHeaderTokenExtractor(logger *log.Logger, r *http.Request) (string, erro
 
 	token := authHeaderParts[1]
 	if token != "" {
-		logger.Debug("Token extracted from auth header", encoder.String("requestUrlPath", r.URL.Path))
+		logger.Debug("Token extracted from auth header", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path)})
 		return token, nil
 	}
 
@@ -52,7 +52,7 @@ func CookieTokenExtractor(cookieName string) TokenExtractor {
 		if cookie != nil {
 			token := cookie.Value
 			if token != "" {
-				logger.Debug("Token extracted from cookie", encoder.String("requestUrlPath", r.URL.Path))
+				logger.Debug("Token extracted from cookie", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path)})
 				return token, nil
 			}
 		}
@@ -70,7 +70,7 @@ func FormTokenExtractor(urlPathPrefix string, param string) TokenExtractor {
 			if err == nil {
 				token := r.Form.Get(param)
 				if token != "" {
-					logger.Debug("Token extracted from form", encoder.String("requestUrlPath", r.URL.Path))
+					logger.Debug("Token extracted from form", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path)})
 					return token, nil
 				}
 			}
@@ -86,7 +86,7 @@ func ParameterTokenExtractor(param string) TokenExtractor {
 	return func(logger *log.Logger, r *http.Request) (string, error) {
 		token := r.URL.Query().Get(param)
 		if token != "" {
-			logger.Debug("Token extracted from form", encoder.String("requestUrlPath", r.URL.Path))
+			logger.Debug("Token extracted from form", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path)})
 			return token, nil
 		}
 
