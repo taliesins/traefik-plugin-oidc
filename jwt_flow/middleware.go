@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/taliesins/traefik-plugin-oidc/log"
+	"github.com/taliesins/traefik-plugin-oidc/log/encoder"
 	"net/http"
 	"regexp"
 )
@@ -60,11 +61,13 @@ func (m *JWTMiddleware) DefaultFlow(next http.Handler) Flow {
 		// If we don't validate on OPTIONS and this is OPTIONS
 		// then continue onto next without validating.
 		if !m.validateOnOptions && r.Method == http.MethodOptions {
+			logger.Debug("Skipping validation as its an options request", []encoder.Field{encoder.String("requestMethod", r.Method)})
 			m.successHandler(logger, next, w, r, "")
 			return
 		}
 
 		if m.ignorePathRegex != nil && m.ignorePathRegex.MatchString(r.URL.Path) {
+			logger.Debug("Skipping validation as request matches ignore regex path", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path)})
 			m.successHandler(logger, next, w, r, "")
 			return
 		}
@@ -73,6 +76,7 @@ func (m *JWTMiddleware) DefaultFlow(next http.Handler) Flow {
 		if err != nil {
 			// This is not ErrJWTMissing because an error here means that the
 			// tokenExtractor had an error and _not_ that the token was missing.
+			logger.Debug("Was not able to extract token", []encoder.Field{encoder.Error(err), encoder.String("requestUrlPath", r.URL.Path)})
 			m.errorHandler(logger, w, r, fmt.Errorf("error extracting token: %w", err))
 			return
 		}
@@ -81,11 +85,13 @@ func (m *JWTMiddleware) DefaultFlow(next http.Handler) Flow {
 			// If credentials are optional continue
 			// onto next without validating.
 			if m.credentialsOptional {
+				logger.Debug("Credentials have not been supplied but they are optional", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path)})
 				m.successHandler(logger, next, w, r, "")
 				return
 			}
 
 			// Credentials were not optional so we error.
+			logger.Debug("Token is empty and it is not optional", []encoder.Field{encoder.Error(err), encoder.String("requestUrlPath", r.URL.Path)})
 			m.errorHandler(logger, w, r, ErrJWTMissing)
 			return
 		}
@@ -93,6 +99,7 @@ func (m *JWTMiddleware) DefaultFlow(next http.Handler) Flow {
 		// Validate the token using the token validator.
 		validToken, err := m.validateToken(logger, r.Context(), token)
 		if err != nil {
+			logger.Debug("Not able to validate token", []encoder.Field{encoder.Error(err), encoder.String("token", token)})
 			m.errorHandler(logger, w, r, &invalidError{details: err})
 			return
 		}
@@ -100,6 +107,7 @@ func (m *JWTMiddleware) DefaultFlow(next http.Handler) Flow {
 		// No err means we have a valid token, so set
 		// it into the context and continue onto next.
 		r = r.Clone(context.WithValue(r.Context(), ContextKey{}, validToken))
+		logger.Debug("Valid token", []encoder.Field{encoder.String("token", token)})
 		m.successHandler(logger, next, w, r, token)
 		return
 	}

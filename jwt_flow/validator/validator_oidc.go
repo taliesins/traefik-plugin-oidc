@@ -70,19 +70,19 @@ func OidcTokenValidator(
 			}
 
 			if currentKeyId != "" && jwksAddress != "" {
-				publicKey, _, err := jwks.GetPublicKeyFromJwksUri(currentKeyId, jwksAddress)
+				jwksPublicKey, _, err := jwks.GetPublicKeyFromJwksUri(currentKeyId, jwksAddress)
 				if err != nil {
 					return nil, fmt.Errorf("unable to get public key from jwks address %s for currentKeyId %s with error %s", jwksAddress, currentKeyId, err)
 				}
-				return publicKey, nil
+				return jwksPublicKey, nil
 			}
 
 			if currentKeyId != "" && oidcDiscoveryAddress != "" {
-				publicKey, _, err := jwks.GetPublicKeyFromOpenIdConnectDiscoveryUri(currentKeyId, oidcDiscoveryAddress)
+				jwksPublicKey, _, err := jwks.GetPublicKeyFromOpenIdConnectDiscoveryUri(currentKeyId, oidcDiscoveryAddress)
 				if err != nil {
 					return nil, fmt.Errorf("unable to get public key from discovery address %s for currentKeyId %s with error %s", oidcDiscoveryAddress, currentKeyId, err)
 				}
-				return publicKey, nil
+				return jwksPublicKey, nil
 			}
 
 			if currentKeyId != "" && useDynamicValidation {
@@ -102,11 +102,11 @@ func OidcTokenValidator(
 					err = nil
 				}
 
-				publicKey, _, err := jwks.GetPublicKeyFromIssuerUri(currentKeyId, currentIssuer)
+				issuerPublicKey, _, err := jwks.GetPublicKeyFromIssuerUri(currentKeyId, currentIssuer)
 				if err != nil {
 					return nil, fmt.Errorf("unable to get public key from issuer %s for currentKeyId %s with error %s", currentIssuer, currentKeyId, err)
 				}
-				return publicKey, nil
+				return issuerPublicKey, nil
 			}
 
 			return nil, fmt.Errorf("unable to get key to decode JWT. alg=%q, kid=%q", currentAlgorithm, currentKeyId)
@@ -202,19 +202,19 @@ func keyFunc(token *jwt.Token, algorithmValidationRegex *regexp.Regexp, issuerVa
 	}
 
 	if currentKeyId != "" && jwksAddress != "" {
-		publicKey, _, err := jwks.GetPublicKeyFromJwksUri(currentKeyId, jwksAddress)
+		jwksPublicKey, _, err := jwks.GetPublicKeyFromJwksUri(currentKeyId, jwksAddress)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get public key from jwks address %s for currentKeyId %s with error %s", jwksAddress, currentKeyId, err)
 		}
-		return publicKey, nil
+		return jwksPublicKey, nil
 	}
 
 	if currentKeyId != "" && oidcDiscoveryAddress != "" {
-		publicKey, _, err := jwks.GetPublicKeyFromOpenIdConnectDiscoveryUri(currentKeyId, oidcDiscoveryAddress)
+		jwksPublicKey, _, err := jwks.GetPublicKeyFromOpenIdConnectDiscoveryUri(currentKeyId, oidcDiscoveryAddress)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get public key from discovery address %s for currentKeyId %s with error %s", oidcDiscoveryAddress, currentKeyId, err)
 		}
-		return publicKey, nil
+		return jwksPublicKey, nil
 	}
 
 	if currentKeyId != "" && useDynamicValidation {
@@ -234,11 +234,11 @@ func keyFunc(token *jwt.Token, algorithmValidationRegex *regexp.Regexp, issuerVa
 			err = nil
 		}
 
-		publicKey, _, err := jwks.GetPublicKeyFromIssuerUri(currentKeyId, currentIssuer)
+		issuerPublicKey, _, err := jwks.GetPublicKeyFromIssuerUri(currentKeyId, currentIssuer)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get public key from issuer %s for currentKeyId %s with error %s", currentIssuer, currentKeyId, err)
 		}
-		return publicKey, nil
+		return issuerPublicKey, nil
 	}
 
 	return nil, fmt.Errorf("unable to get key to decode JWT. alg=%q, kid=%q", currentAlgorithm, currentKeyId)
