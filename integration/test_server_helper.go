@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +12,7 @@ import (
 	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 )
 
-func getJsonWebset(certificate *jwt_certificate.Certificate) (*jwt_certificate.JSONWebKeySet, error) {
+func getJsonWebKeySet(certificate *jwt_certificate.Certificate) (*jwt_certificate.JSONWebKeySet, error) {
 	publicKeyData, err := certificate.CertFile.Read()
 	if err != nil {
 		return nil, err
@@ -57,12 +56,12 @@ func BuildTestJwkServer(publicKeyRootPath string, privateKeyRootPath string, oid
 		return nil, nil, err
 	}
 
-	jsonWebKeySet, err := getJsonWebset(certificate)
+	jsonWebKeySet, err := getJsonWebKeySet(certificate)
 	if err != nil {
 		return nil, nil, err
 	}
-	//TODO
-	jsonWebKeySetJson, err := json.Marshal(jsonWebKeySet)
+
+	jsonWebKeySetJson, err := jsonWebKeySet.MarshalJSON()
 	if err != nil {
 		return nil, nil, err
 	}

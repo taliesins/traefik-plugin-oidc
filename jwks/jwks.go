@@ -135,7 +135,7 @@ func DownloadJwksUri(jwksUri string) (*jwt_certificate.JSONWebKeySet, error) {
 	}
 
 	jwks := &jwt_certificate.JSONWebKeySet{}
-	err = json.Unmarshal(body, jwks)
+	err = jwks.UnmarshalJSON(body)
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +144,7 @@ func DownloadJwksUri(jwksUri string) (*jwt_certificate.JSONWebKeySet, error) {
 }
 
 func GetPublicKeyFromJwksUri(kid string, jwksUri string) (interface{}, x509.SignatureAlgorithm, error) {
+
 	cacheKey := fmt.Sprintf("%s|%s", jwksUri, kid)
 
 	// Try to get and return existing entry from cache. If cache is expired,

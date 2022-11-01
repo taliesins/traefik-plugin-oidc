@@ -46,6 +46,44 @@ type JSONWebKeySet struct {
 	Keys []JSONWebKey `json:"keys"`
 }
 
+type rawJSONWebKeySet struct {
+	Keys []json.RawMessage `json:"keys"`
+}
+
+func (t *JSONWebKeySet) MarshalJSON() ([]byte, error) {
+	//TODO: once yeagi support serialization of slices then we can remove this method https://github.com/traefik/yaegi/issues/1486
+	var keyJsonBytes []json.RawMessage
+
+	for _, jsonWebKey := range t.Keys {
+		jsonWebKeyJsonBytes, _ := json.Marshal(jsonWebKey)
+		keyJsonBytes = append(keyJsonBytes, jsonWebKeyJsonBytes)
+	}
+
+	return json.Marshal(&rawJSONWebKeySet{
+		Keys: keyJsonBytes,
+	})
+}
+
+func (t *JSONWebKeySet) UnmarshalJSON(b []byte) error {
+	//TODO: once yeagi support serialization of slices then we can remove this method https://github.com/traefik/yaegi/issues/1486
+	raw := &rawJSONWebKeySet{}
+	json.Unmarshal(b, raw)
+
+	var keys []JSONWebKey
+
+	for _, rawJsonWebKeyJsonBytes := range raw.Keys {
+		jsonWebKeyObject := JSONWebKey{}
+		jsonWebKeyObject.UnmarshalJSON(rawJsonWebKeyJsonBytes)
+		keys = append(keys, jsonWebKeyObject)
+	}
+
+	*t = JSONWebKeySet{
+		Keys: keys,
+	}
+
+	return nil
+}
+
 // Valid checks that the key contains the expected parameters.
 func (k *JSONWebKey) Valid() bool {
 	if k.Key == nil {
