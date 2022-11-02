@@ -3,10 +3,11 @@ package jwt_flow
 import (
 	"context"
 	"fmt"
-	"github.com/taliesins/traefik-plugin-oidc/log"
-	"github.com/taliesins/traefik-plugin-oidc/log/encoder"
 	"net/http"
 	"regexp"
+
+	"github.com/taliesins/traefik-plugin-oidc/log"
+	"github.com/taliesins/traefik-plugin-oidc/log/encoder"
 )
 
 // ContextKey is the key used in the request

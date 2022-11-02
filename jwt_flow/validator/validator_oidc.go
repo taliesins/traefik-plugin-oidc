@@ -130,7 +130,6 @@ func validateClaims(err error, token *jwt.Token, issuerValidationRegex *regexp.R
 	if err = token.Claims.Valid(); err != nil {
 		return nil, fmt.Errorf("could not get token claims: %w", err)
 	}
-	//TODO token does not contains the registered claims, cast is failing
 	registeredClaims := token.Claims.(*jwt.RegisteredClaims)
 
 	if issuerValidationRegex != nil && !issuerValidationRegex.MatchString(registeredClaims.Issuer) {
@@ -138,8 +137,7 @@ func validateClaims(err error, token *jwt.Token, issuerValidationRegex *regexp.R
 	}
 
 	if subjectValidationRegex != nil && !subjectValidationRegex.MatchString(registeredClaims.Subject) {
-		//TODO
-		return nil, jwt.ErrTokenMalformed
+		return nil, jwt.ErrTokenInvalidSubject
 	}
 
 	if idValidationRegex != nil && !idValidationRegex.MatchString(registeredClaims.ID) {

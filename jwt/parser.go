@@ -150,6 +150,11 @@ func (p *Parser) ParseUnverified(tokenString string, claims Claims) (token *Toke
 	if err != nil {
 		return token, parts, &ValidationError{Inner: err, Errors: ValidationErrorMalformed}
 	}
+	// TODO Yaegi foreced us to do the casting
+	err = token.Claims.(*RegisteredClaims).UnmarshalJSON(claimBytes)
+	if err != nil {
+		return token, parts, &ValidationError{Inner: err, Errors: ValidationErrorMalformed}
+	}
 
 	// Lookup signature method
 	if method, ok := token.Header["alg"].(string); ok {
@@ -159,6 +164,5 @@ func (p *Parser) ParseUnverified(tokenString string, claims Claims) (token *Toke
 	} else {
 		return token, parts, NewValidationError("signing method (alg) is unspecified.", ValidationErrorUnverifiable)
 	}
-
 	return token, parts, nil
 }
