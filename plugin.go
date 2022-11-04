@@ -95,6 +95,15 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	*/
 
 	// Parse config
+	// switch config.SsoRedirectUrlMacStrength {
+	// case sso_redirector.HmacStrength_256: {}
+	// case sso_redirector.HmacStrength_384: {}
+	// case sso_redirector.HmacStrength_512: {}
+	// default: {
+	// 	config.SsoRedirectUrlMacStrength = sso_redirector.HmacStrength_256
+	// }
+	config.SsoRedirectUrlMacStrength = sso_redirector.HmacStrength_256
+
 	if config.UseDynamicValidation == true && (config.Issuer == "" && config.IssuerValidationRegex == "") {
 		logger.Warn("DANGER DANGER DANGER when 'UseDynamicValidation' = 'true' and 'Issuer' = '' and 'IssuerValidationRegex' = '', then tokens from any IdP will be trusted - this is an insecure configuration DANGER DANGER DANGER", nil)
 	}
@@ -125,8 +134,13 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 	//Redirect url for SSO
 	var ssoRedirectUrlAddressTemplate *template.Template
+	fmt.Println("REDIRECT ADDRESS TEMPLATE")
+	fmt.Println(config.SsoRedirectUrlAddressTemplate)
+
 	if config.SsoRedirectUrlAddressTemplate != "" {
 		ssoRedirectUrlAddressTemplate, err = sso_redirector.GetSsoRedirectUrlTemplate(config.SsoRedirectUrlAddressTemplate)
+		fmt.Println("REDIRECT TEMPLATE RESULT")
+		fmt.Println(ssoRedirectUrlAddressTemplate)
 		if err != nil {
 			logger.Fatal("Unable to parse config SsoRedirectUrlAddressTemplate", []encoder.Field{encoder.Error(err), encoder.String("SsoRedirectUrlAddressTemplate", config.SsoRedirectUrlAddressTemplate)})
 			return nil, err
