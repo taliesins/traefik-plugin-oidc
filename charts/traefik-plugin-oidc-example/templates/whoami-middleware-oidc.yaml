@@ -6,7 +6,7 @@ metadata:
 spec:
   plugin:
     traefik-plugin-oidc:
-      SsoRedirectUrlAddressTemplate: "http://keycloak.localhost/realms/whoami/protocol/openid-connect/auth?client_id=whoami-middleware-oidc-keycloak&nonce={{.Nonce}}&redirect_uri={{.CallbackUrl}}&state={{.State}}&scope=openid&response_type=id_token"
+      SsoRedirectUrlAddressTemplate: "{{`http://keycloak.localhost/realms/whoami/protocol/openid-connect/auth?client_id=whoami-middleware-oidc-keycloak&nonce={{.Nonce}}&redirect_uri={{.CallbackUrl}}&state={{.State}}&scope=openid&response_type=id_token`}}"
       SsoRedirectUrlMacStrength:         "256"
       SsoRedirectUrlMacClientSecret:     "password"
       SsoRedirectUrlMacPrivateKey:       ""

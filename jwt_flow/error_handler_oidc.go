@@ -25,7 +25,6 @@ func OidcErrorHandler(
 	return func(logger *log.Logger, w http.ResponseWriter, r *http.Request, err error) {
 
 		if ssoRedirectUrlTemplate == nil {
-			//TODO YAEGI failing
 			logger.Debug("No ssoRedirectUrlTemplate specified", nil)
 			http.Error(w, "", http.StatusUnauthorized)
 			return
@@ -50,7 +49,7 @@ func OidcErrorHandler(
 		if ssoRedirectUrlMacSigningKey != nil {
 			redirectorUrl, err = sso_redirector.GetRedirectorUrl(r, ssoRedirectUrlMacSigningKey, ssoRedirectUrlMacStrength, nonce, issuedAt)
 			if err != nil {
-				logger.Error("Unable to get redirecor url", []encoder.Field{encoder.Error(err)})
+				logger.Error("Unable to get redirector url", []encoder.Field{encoder.Error(err)})
 				http.Error(w, "", http.StatusUnauthorized)
 				return
 			}
