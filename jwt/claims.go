@@ -121,28 +121,30 @@ func (c *RegisteredClaims) UnmarshalJSON(b []byte) (err error) {
 		ID:      raw.ID,
 	}
 
-	if raw.Audience != nil {
+	if len(raw.Audience) > 0 {
+		regClaims.Audience = ClaimStrings{}
 		err = regClaims.Audience.UnmarshalJSON(raw.Audience)
 		if err != nil {
 			return err
 		}
 	}
-
-	if raw.ExpiresAt != nil {
+	if len(raw.ExpiresAt) > 0 {
+		regClaims.ExpiresAt = &NumericDate{}
 		err = regClaims.ExpiresAt.UnmarshalJSON(raw.ExpiresAt)
 		if err != nil {
 			return err
 		}
 	}
 
-	if raw.NotBefore != nil {
+	if len(raw.NotBefore) > 0 {
+		regClaims.NotBefore = &NumericDate{}
 		err = regClaims.NotBefore.UnmarshalJSON(raw.NotBefore)
 		if err != nil {
 			return err
 		}
 	}
-
-	if raw.IssuedAt != nil {
+	if len(raw.IssuedAt) > 0 {
+		regClaims.IssuedAt = &NumericDate{}
 		err = regClaims.IssuedAt.UnmarshalJSON(raw.IssuedAt)
 		if err != nil {
 			return err
