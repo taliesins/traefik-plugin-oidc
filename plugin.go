@@ -134,13 +134,9 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 	//Redirect url for SSO
 	var ssoRedirectUrlAddressTemplate *template.Template
-	fmt.Println("REDIRECT ADDRESS TEMPLATE")
-	fmt.Println(config.SsoRedirectUrlAddressTemplate)
 
 	if config.SsoRedirectUrlAddressTemplate != "" {
 		ssoRedirectUrlAddressTemplate, err = sso_redirector.GetSsoRedirectUrlTemplate(config.SsoRedirectUrlAddressTemplate)
-		fmt.Println("REDIRECT TEMPLATE RESULT")
-		fmt.Println(ssoRedirectUrlAddressTemplate)
 		if err != nil {
 			logger.Fatal("Unable to parse config SsoRedirectUrlAddressTemplate", []encoder.Field{encoder.Error(err), encoder.String("SsoRedirectUrlAddressTemplate", config.SsoRedirectUrlAddressTemplate)})
 			return nil, err

@@ -17,7 +17,7 @@ spec:
       Issuer:               ""
       Audience:             ""
       JwksAddress:          ""
-      OidcDiscoveryAddress: "http://keycloak.localhost/realms/whoami/.well-known/openid-configuration"
+      OidcDiscoveryAddress: "http://example-keycloak/realms/whoami/.well-known/openid-configuration"
       UseDynamicValidation: false
 
       AlgorithmValidationRegex: ""

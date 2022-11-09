@@ -5,13 +5,14 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
+
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 )
 
 var lruCache *lru.Cache
@@ -227,7 +228,7 @@ func GetPublicKeyFromJwks(jwks *jwt_certificate.JSONWebKeySet, kid string) (inte
 		}
 	}
 
-	jwksJson, _ := json.Marshal(jwks)
+	jwksJson, _ := jwks.MarshalJSON()
 	return nil, x509.UnknownSignatureAlgorithm, fmt.Errorf("JsonWebKeySet does not contain key: kid=%s jwks=%s", kid, jwksJson)
 }
 
