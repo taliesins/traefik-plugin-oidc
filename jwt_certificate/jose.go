@@ -46,7 +46,7 @@ type JSONWebKeySet struct {
 	Keys []JSONWebKey `json:"keys"`
 }
 
-type rawJSONWebKeySet struct {
+type RawJSONWebKeySet struct {
 	Keys []json.RawMessage `json:"keys"`
 }
 
@@ -55,26 +55,29 @@ func (t *JSONWebKeySet) MarshalJSON() ([]byte, error) {
 	var keyJsonBytes []json.RawMessage
 
 	for _, jsonWebKey := range t.Keys {
-		jsonWebKeyJsonBytes, _ := json.Marshal(jsonWebKey)
+		jsonWebKeyJsonBytes, _ := jsonWebKey.MarshalJSON()
 		keyJsonBytes = append(keyJsonBytes, jsonWebKeyJsonBytes)
 	}
 
-	return json.Marshal(&rawJSONWebKeySet{
+	return json.Marshal(&RawJSONWebKeySet{
 		Keys: keyJsonBytes,
 	})
 }
 
 func (t *JSONWebKeySet) UnmarshalJSON(b []byte) error {
 	//TODO: once yeagi support serialization of slices then we can remove this method https://github.com/traefik/yaegi/issues/1486
-	raw := &rawJSONWebKeySet{}
+	raw := &RawJSONWebKeySet{}
 	json.Unmarshal(b, raw)
 
 	var keys []JSONWebKey
 
-	for _, rawJsonWebKeyJsonBytes := range raw.Keys {
-		jsonWebKeyObject := JSONWebKey{}
-		jsonWebKeyObject.UnmarshalJSON(rawJsonWebKeyJsonBytes)
-		keys = append(keys, jsonWebKeyObject)
+	for _, rawJSONWebKeyJsonBytes := range raw.Keys {
+		jsonWebKeyObject := &JSONWebKey{}
+		err := jsonWebKeyObject.UnmarshalJSON(rawJSONWebKeyJsonBytes)
+		if err != nil {
+			return err
+		}
+		keys = append(keys, *jsonWebKeyObject)
 	}
 
 	*t = JSONWebKeySet{
@@ -163,8 +166,8 @@ func (b *byteBuffer) UnmarshalJSON(data []byte) error {
 	if encoded == "" {
 		return nil
 	}
-
 	decoded, err := base64.RawURLEncoding.DecodeString(encoded)
+
 	if err != nil {
 		return err
 	}
@@ -176,6 +179,34 @@ func (b *byteBuffer) UnmarshalJSON(data []byte) error {
 
 func (b *byteBuffer) base64() string {
 	return base64.RawURLEncoding.EncodeToString(b.data)
+}
+
+type reallyRawJSONWebKey struct {
+	Use string           `json:"use,omitempty"`
+	Kty string           `json:"kty,omitempty"`
+	Kid string           `json:"kid,omitempty"`
+	Crv string           `json:"crv,omitempty"`
+	Alg string           `json:"alg,omitempty"`
+	K   *json.RawMessage `json:"k,omitempty"`
+	X   *json.RawMessage `json:"x,omitempty"`
+	Y   *json.RawMessage `json:"y,omitempty"`
+	N   *json.RawMessage `json:"n,omitempty"`
+	E   *json.RawMessage `json:"e,omitempty"`
+	// -- Following fields are only used for private keys --
+	// RSA uses D, P and Q, while ECDSA uses only D. Fields Dp, Dq, and Qi are
+	// completely optional. Therefore for RSA/ECDSA, D != nil is a contract that
+	// we have a private key whereas D == nil means we have only a public key.
+	D  *json.RawMessage `json:"d,omitempty"`
+	P  *json.RawMessage `json:"p,omitempty"`
+	Q  *json.RawMessage `json:"q,omitempty"`
+	Dp *json.RawMessage `json:"dp,omitempty"`
+	Dq *json.RawMessage `json:"dq,omitempty"`
+	Qi *json.RawMessage `json:"qi,omitempty"`
+	// Certificates
+	X5c       []string `json:"x5c,omitempty"`
+	X5u       *url.URL `json:"x5u,omitempty"`
+	X5tSHA1   string   `json:"x5t,omitempty"`
+	X5tSHA256 string   `json:"x5t#S256,omitempty"`
 }
 
 // rawJSONWebKey represents a public or private key in JWK format, used for parsing/serializing.
@@ -410,13 +441,165 @@ func (k JSONWebKey) MarshalJSON() ([]byte, error) {
 	}
 
 	raw.X5u = k.CertificatesURL
-	bytes, err := json.Marshal(raw)
+	bytes, err := raw.MarshalJSON()
 	return bytes, err
+}
+
+// This is a workaround for yaegi due to issues we found trying to unmarshal to bytebuffer
+func (k *rawJSONWebKey) UnmarshalJSON(data []byte) (err error) {
+	var rraw reallyRawJSONWebKey
+	err = json.Unmarshal(data, &rraw)
+
+	if err != nil {
+		return err
+	}
+
+	*k = rawJSONWebKey{
+		Use:       rraw.Use,
+		Kty:       rraw.Kty,
+		Kid:       rraw.Kid,
+		Crv:       rraw.Crv,
+		Alg:       rraw.Alg,
+		X5c:       rraw.X5c,
+		X5u:       rraw.X5u,
+		X5tSHA1:   rraw.X5tSHA1,
+		X5tSHA256: rraw.X5tSHA256,
+	}
+
+	if rraw.K != nil {
+		k.K = &byteBuffer{}
+		k.K.UnmarshalJSON(*rraw.K)
+	}
+
+	if rraw.X != nil {
+		k.X = &byteBuffer{}
+		k.X.UnmarshalJSON(*rraw.X)
+	}
+
+	if rraw.Y != nil {
+		k.Y = &byteBuffer{}
+		k.Y.UnmarshalJSON(*rraw.Y)
+	}
+
+	if rraw.N != nil {
+		k.N = &byteBuffer{}
+		k.N.UnmarshalJSON(*rraw.N)
+	}
+
+	if rraw.E != nil {
+		k.E = &byteBuffer{}
+		k.E.UnmarshalJSON(*rraw.E)
+	}
+
+	if rraw.D != nil {
+		k.D = &byteBuffer{}
+		k.D.UnmarshalJSON(*rraw.D)
+	}
+
+	if rraw.P != nil {
+		k.P = &byteBuffer{}
+		k.P.UnmarshalJSON(*rraw.P)
+	}
+
+	if rraw.Q != nil {
+		k.Q = &byteBuffer{}
+		k.Q.UnmarshalJSON(*rraw.Q)
+	}
+
+	if rraw.Dp != nil {
+		k.Dp = &byteBuffer{}
+		k.Dp.UnmarshalJSON(*rraw.Dp)
+	}
+
+	if rraw.Dq != nil {
+		k.Dq = &byteBuffer{}
+		k.Dq.UnmarshalJSON(*rraw.Dq)
+	}
+
+	if rraw.Qi != nil {
+		k.Qi = &byteBuffer{}
+		k.Qi.UnmarshalJSON(*rraw.Qi)
+	}
+
+	return
+}
+
+func (k *rawJSONWebKey) MarshalJSON() ([]byte, error) {
+
+	rraw := &reallyRawJSONWebKey{
+		Use:     k.Use,
+		Kty:     k.Kty,
+		Kid:     k.Kid,
+		Crv:     k.Crv,
+		Alg:     k.Alg,
+		X5c:     k.X5c,
+		X5u:     k.X5u,
+		X5tSHA1: k.X5tSHA1,
+	}
+
+	if k.K != nil {
+		rraw.X = &json.RawMessage{}
+		*rraw.X, _ = json.Marshal(k.K)
+	}
+
+	if k.X != nil {
+		rraw.X = &json.RawMessage{}
+		*rraw.X, _ = json.Marshal(k.X)
+	}
+
+	if k.Y != nil {
+		rraw.Y = &json.RawMessage{}
+		*rraw.Y, _ = json.Marshal(k.Y)
+	}
+
+	if k.N != nil {
+		rraw.N = &json.RawMessage{}
+		*rraw.N, _ = json.Marshal(k.N)
+	}
+
+	if k.E != nil {
+		rraw.E = &json.RawMessage{}
+		*rraw.E, _ = json.Marshal(k.E)
+	}
+
+	if k.D != nil {
+		rraw.D = &json.RawMessage{}
+		*rraw.D, _ = json.Marshal(k.D)
+	}
+
+	if k.P != nil {
+		rraw.P = &json.RawMessage{}
+		*rraw.P, _ = json.Marshal(k.P)
+	}
+
+	if k.Q != nil {
+		rraw.Q = &json.RawMessage{}
+		*rraw.Q, _ = json.Marshal(k.Q)
+	}
+
+	if k.Dp != nil {
+		rraw.Dp = &json.RawMessage{}
+		*rraw.Dp, _ = json.Marshal(k.Dp)
+	}
+
+	if k.Dq != nil {
+		rraw.Dq = &json.RawMessage{}
+		*rraw.Dq, _ = json.Marshal(k.Dq)
+	}
+
+	if k.Qi != nil {
+		rraw.Qi = &json.RawMessage{}
+		*rraw.Qi, _ = json.Marshal(k.Qi)
+	}
+
+	return json.Marshal(rraw)
 }
 
 func (k *JSONWebKey) UnmarshalJSON(data []byte) (err error) {
 	var raw rawJSONWebKey
-	err = json.Unmarshal(data, &raw)
+
+	err = raw.UnmarshalJSON(data)
+
 	if err != nil {
 		return err
 	}

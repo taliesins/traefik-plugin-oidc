@@ -1,11 +1,12 @@
 package jwt_flow
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/taliesins/traefik-plugin-oidc/log"
 	"github.com/taliesins/traefik-plugin-oidc/log/encoder"
-	"net/http"
-	"strings"
 )
 
 // TokenExtractor is a function that takes a request as input and returns
@@ -41,9 +42,11 @@ func AuthHeaderTokenExtractor(logger *log.Logger, r *http.Request) (string, erro
 // extracts the token from the cookie using the passed in cookieName.
 func CookieTokenExtractor(cookieName string) TokenExtractor {
 	return func(logger *log.Logger, r *http.Request) (string, error) {
+		logger.Debug("[CookieTokenExtractor] Request url query : ", []encoder.Field{encoder.String("RawQuery", r.URL.RawQuery)})
 		cookie, err := r.Cookie(cookieName)
 		if err != nil {
 			if err == http.ErrNoCookie {
+				logger.Debug("[CookieTokenExtractor] No cookie found", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path), encoder.String("Cookie", cookieName)})
 				return "", nil // No error, just no JWT.
 			}
 			return "", err
@@ -52,10 +55,12 @@ func CookieTokenExtractor(cookieName string) TokenExtractor {
 		if cookie != nil {
 			token := cookie.Value
 			if token != "" {
-				logger.Debug("Token extracted from cookie", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path)})
+				logger.Debug("[CookieTokenExtractor] Token extracted from cookie", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path), encoder.String("Cookie", cookie.Name)})
 				return token, nil
 			}
 		}
+
+		logger.Debug("[CookieTokenExtractor] Unable to extract token extracted from cookie", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path), encoder.String("Cookie", cookie.Name)})
 
 		return "", nil // No error, just no JWT.
 	}
@@ -70,11 +75,12 @@ func FormTokenExtractor(urlPathPrefix string, param string) TokenExtractor {
 			if err == nil {
 				token := r.Form.Get(param)
 				if token != "" {
-					logger.Debug("Token extracted from form", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path)})
+					logger.Debug("[FormTokenExtractor] Token extracted from form post", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path), encoder.String("param", param)})
 					return token, nil
 				}
 			}
 		}
+		logger.Debug("[FormTokenExtractor] No token extracted from form post", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path), encoder.String("param", param)})
 
 		return "", nil // No error, just no JWT.
 	}
@@ -86,9 +92,11 @@ func ParameterTokenExtractor(param string) TokenExtractor {
 	return func(logger *log.Logger, r *http.Request) (string, error) {
 		token := r.URL.Query().Get(param)
 		if token != "" {
-			logger.Debug("Token extracted from form", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path)})
+			logger.Debug("[ParameterTokenExtractor] Token extracted from parameter", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path), encoder.String("param", param)})
 			return token, nil
 		}
+
+		logger.Debug("[ParameterTokenExtractor] No token extracted from parameter", []encoder.Field{encoder.String("requestUrlPath", r.URL.Path), encoder.String("param", param)})
 
 		return "", nil // No error, just no JWT.
 	}
