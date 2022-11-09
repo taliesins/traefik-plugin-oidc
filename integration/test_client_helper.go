@@ -3,6 +3,13 @@ package integration
 import (
 	"crypto/tls"
 	"fmt"
+	guuid "github.com/google/uuid"
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/assert"
+	jwtgo "github.com/taliesins/traefik-plugin-oidc/jwt"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
+	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
 	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 	"io"
 	"net/http"
@@ -11,14 +18,6 @@ import (
 	"strconv"
 	"testing"
 	"time"
-
-	jwtgo "github.com/golang-jwt/jwt/v4"
-	guuid "github.com/google/uuid"
-	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/assert"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_flow"
-	"github.com/taliesins/traefik-plugin-oidc/sso_redirector"
 )
 
 type overrideClient func(*http.Client) *http.Client
@@ -64,33 +63,12 @@ func BuildTestClient(certificate *jwt_certificate.Certificate, clientSecret stri
 		return nil, "", "", "", nil, nil, err
 	}
 
-	var privateKey interface{}
-	if clientSecret != "" {
-		if tokenSigningMethod.Alg() != jwtgo.SigningMethodHS256.Name && tokenSigningMethod.Alg() != jwtgo.SigningMethodHS384.Name && tokenSigningMethod.Alg() != jwtgo.SigningMethodHS512.Name {
-			return nil, "", "", "", nil, nil, fmt.Errorf("certificate needs to be specified with this signing method")
-		}
-
-		privateKey = []byte(clientSecret)
-	} else if certificate != nil {
-		if tokenSigningMethod.Alg() == jwtgo.SigningMethodHS256.Name || tokenSigningMethod.Alg() == jwtgo.SigningMethodHS384.Name || tokenSigningMethod.Alg() == jwtgo.SigningMethodHS512.Name {
-			return nil, "", "", "", nil, nil, fmt.Errorf("client secret needs to be specified with this signing method")
-		}
-
-		//Need the signing key to use for mac of url, so just use the one we use for JWT
-		privateKeyPemData, err := certificate.KeyFile.Read()
-		if err != nil {
-			return nil, "", "", "", nil, nil, err
-		}
-
-		privateKey, err = jwt_certificate.GetPrivateKey(privateKeyPemData)
-		if err != nil {
-			return nil, "", "", "", nil, nil, err
-		}
-	} else {
-		return nil, "", "", "", nil, nil, fmt.Errorf("certificate and client secret not specified, there is no way to sign request")
+	privateKey, err := getPrivateKeyToUseForClient(certificate, clientSecret, tokenSigningMethod)
+	if err != nil {
+		return nil, "", "", "", nil, nil, err
 	}
 
-	macStrength := sso_redirector.MacStrength_256
+	macStrength := sso_redirector.HmacStrength_256
 	err = sso_redirector.AddMacHashToUrl(expectedRedirectorUrl, privateKey, macStrength)
 	if err != nil {
 		return nil, "", "", "", nil, nil, err
@@ -116,6 +94,35 @@ func BuildTestClient(certificate *jwt_certificate.Certificate, clientSecret stri
 	}
 
 	return client, nonce, issuedAt, signedToken, clientRequestUrl, expectedRedirectorUrl, nil
+}
+
+func getPrivateKeyToUseForClient(certificate *jwt_certificate.Certificate, clientSecret string, tokenSigningMethod jwtgo.SigningMethod) (interface{}, error) {
+	var privateKey interface{}
+	if clientSecret != "" {
+		if tokenSigningMethod.Alg() != jwtgo.SigningMethodHS256.Name && tokenSigningMethod.Alg() != jwtgo.SigningMethodHS384.Name && tokenSigningMethod.Alg() != jwtgo.SigningMethodHS512.Name {
+			return nil, fmt.Errorf("certificate needs to be specified with this signing method")
+		}
+
+		privateKey = []byte(clientSecret)
+	} else if certificate != nil {
+		if tokenSigningMethod.Alg() == jwtgo.SigningMethodHS256.Name || tokenSigningMethod.Alg() == jwtgo.SigningMethodHS384.Name || tokenSigningMethod.Alg() == jwtgo.SigningMethodHS512.Name {
+			return nil, fmt.Errorf("client secret needs to be specified with this signing method")
+		}
+
+		//Need the signing key to use for mac of url, so just use the one we use for JWT
+		privateKeyPemData, err := certificate.KeyFile.Read()
+		if err != nil {
+			return nil, err
+		}
+
+		privateKey, err = jwt_certificate.GetPrivateKey(privateKeyPemData)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf("certificate and client secret not specified, there is no way to sign request")
+	}
+	return privateKey, nil
 }
 
 // MustNewRequest creates a new http get request or panics if it can't.
@@ -297,18 +304,13 @@ func RunTestWithPublicKeyFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 }
 
 func RunTestWithDiscoverySuccess(t *testing.T, signingMethod jwtgo.SigningMethod, certificatePath string, setIssuer bool, setOidcDiscoveryUri bool, setJwksUri bool, tokenInjector jwt_flow.TokenInjector) {
-	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
-		if setIssuer {
-			pluginConfig.Issuer = issuerUri.String()
-		}
-		if setOidcDiscoveryUri {
-			pluginConfig.OidcDiscoveryAddress = oidcDiscoveryUri.String()
-		}
-		if setJwksUri {
-			pluginConfig.JwksAddress = jwksUri.String()
-		}
+	clientSecret := ""
+	setPublicKey := false
 
-		return pluginConfig
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+		plugin, err := setConfigurationForTestServer(pluginConfig, certificate, issuerUri, oidcDiscoveryUri, jwksUri, clientSecret, setPublicKey, setIssuer, setOidcDiscoveryUri, setJwksUri, ssoAddressTemplate, clientSecret, certificate, signingMethod)
+		assert.NoError(t, err)
+		return plugin
 	}
 
 	certificate, jwksServer, pluginServer, err := BuildTestServers(certificatePath, certificatePath, configuration)
@@ -317,7 +319,7 @@ func RunTestWithDiscoverySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 	defer jwksServer.Close()
 	defer pluginServer.Close()
 
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(certificate, clientSecret, jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 	assert.NoError(t, err)
 
 	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
@@ -335,18 +337,14 @@ func RunTestWithDiscoverySuccess(t *testing.T, signingMethod jwtgo.SigningMethod
 }
 
 func RunTestWithDiscoveryFailure(t *testing.T, signingMethod jwtgo.SigningMethod, serverCertificatePath string, clientCertificatePath string, setIssuer bool, setOidcDiscoveryUri bool, setJwksUri bool, tokenInjector jwt_flow.TokenInjector) {
-	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
-		if setIssuer {
-			pluginConfig.Issuer = issuerUri.String()
-		}
-		if setOidcDiscoveryUri {
-			pluginConfig.OidcDiscoveryAddress = oidcDiscoveryUri.String()
-		}
-		if setJwksUri {
-			pluginConfig.JwksAddress = jwksUri.String()
-		}
 
-		return pluginConfig
+	clientSecret := ""
+	setPublicKey := false
+
+	configuration := func(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, ssoAddressTemplate string, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL) *traefikPluginOidc.Config {
+		plugin, err := setConfigurationForTestServer(pluginConfig, certificate, issuerUri, oidcDiscoveryUri, jwksUri, clientSecret, setPublicKey, setIssuer, setOidcDiscoveryUri, setJwksUri, ssoAddressTemplate, clientSecret, certificate, signingMethod)
+		assert.NoError(t, err)
+		return plugin
 	}
 	_, jwksServer, pluginServer, err := BuildTestServers(serverCertificatePath, serverCertificatePath, configuration)
 	assert.NoError(t, err)
@@ -357,7 +355,7 @@ func RunTestWithDiscoveryFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 	clientCertificate, err := test_utils.GetCertificateFromPath(clientCertificatePath, clientCertificatePath)
 	assert.NoError(t, err)
 
-	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(clientCertificate, "", jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
+	client, _, _, signedToken, requestUrl, _, err := BuildTestClient(clientCertificate, clientSecret, jwksServer, pluginServer, signingMethod, "", nil, nil, func(token *jwtgo.Token) { token.Header["kid"] = "0" })
 	assert.NoError(t, err)
 
 	req, err := MustNewRequest(http.MethodGet, requestUrl.String(), nil)
@@ -372,4 +370,53 @@ func RunTestWithDiscoveryFailure(t *testing.T, signingMethod jwtgo.SigningMethod
 	body, err := io.ReadAll(res.Body)
 	assert.NoError(t, err)
 	assert.NotEqual(t, `{"RequestUri":"/", "Referer":""}`+"\n", string(body), "they should not be equal")
+}
+
+func setConfigurationForTestServer(pluginConfig *traefikPluginOidc.Config, certificate *jwt_certificate.Certificate, issuerUri *url.URL, oidcDiscoveryUri *url.URL, jwksUri *url.URL, clientSecret string, setPublicKey bool, setIssuer bool, setOidcDiscoveryUri bool, setJwksUri bool, ssoAddressTemplate string, hmacClientSecret string, hmacCertificate *jwt_certificate.Certificate, hmacSigningMethod jwtgo.SigningMethod) (*traefikPluginOidc.Config, error) {
+	if clientSecret != "" {
+		pluginConfig.ClientSecret = clientSecret
+	}
+	if setPublicKey {
+		certContent, err := certificate.CertFile.Read()
+		if err != nil {
+			return nil, err
+		}
+		pluginConfig.PublicKey = string(certContent)
+	}
+	if setIssuer {
+		pluginConfig.Issuer = issuerUri.String()
+	}
+	if setOidcDiscoveryUri {
+		pluginConfig.OidcDiscoveryAddress = oidcDiscoveryUri.String()
+	}
+	if setJwksUri {
+		pluginConfig.JwksAddress = jwksUri.String()
+	}
+
+	if ssoAddressTemplate != "" || setOidcDiscoveryUri || setJwksUri {
+		pluginConfig.SsoRedirectUrlAddressTemplate = ssoAddressTemplate
+
+		if hmacClientSecret != "" {
+			if hmacSigningMethod.Alg() != jwtgo.SigningMethodHS256.Name && hmacSigningMethod.Alg() != jwtgo.SigningMethodHS384.Name && hmacSigningMethod.Alg() != jwtgo.SigningMethodHS512.Name {
+				return nil, fmt.Errorf("certificate needs to be specified with this signing method")
+			}
+
+			pluginConfig.SsoRedirectUrlMacClientSecret = hmacClientSecret
+		} else if hmacCertificate != nil {
+			if hmacSigningMethod.Alg() == jwtgo.SigningMethodHS256.Name || hmacSigningMethod.Alg() == jwtgo.SigningMethodHS384.Name || hmacSigningMethod.Alg() == jwtgo.SigningMethodHS512.Name {
+				return nil, fmt.Errorf("client secret needs to be specified with this signing method")
+			}
+
+			//Need the signing key to use for mac of url, so just use the one we use for JWT
+			certContent, err := hmacCertificate.KeyFile.Read()
+			if err != nil {
+				return nil, err
+			}
+			pluginConfig.SsoRedirectUrlMacPrivateKey = string(certContent)
+
+		} else {
+			return nil, fmt.Errorf("certificate and client secret not specified, there is no way to sign request")
+		}
+	}
+	return pluginConfig, nil
 }

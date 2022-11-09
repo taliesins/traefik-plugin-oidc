@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"crypto/subtle"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -42,6 +43,117 @@ type RegisteredClaims struct {
 
 	// the `jti` (JWT ID) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
 	ID string `json:"jti,omitempty"`
+}
+
+type rawRegisteredClaims struct {
+	// the `iss` (Issuer) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
+	Issuer string `json:"iss,omitempty"`
+
+	// the `sub` (Subject) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
+	Subject string `json:"sub,omitempty"`
+
+	// the `aud` (Audience) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
+	Audience json.RawMessage `json:"aud,omitempty"`
+
+	// the `exp` (Expiration Time) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
+	ExpiresAt json.RawMessage `json:"exp,omitempty"`
+
+	// the `nbf` (Not Before) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
+	NotBefore json.RawMessage `json:"nbf,omitempty"`
+
+	// the `iat` (Issued At) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
+	IssuedAt json.RawMessage `json:"iat,omitempty"`
+
+	// the `jti` (JWT ID) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
+	ID string `json:"jti,omitempty"`
+}
+
+func (c *RegisteredClaims) MarshalJSON() (b []byte, err error) {
+	rawRegClaims := &rawRegisteredClaims{
+		Issuer:  c.Issuer,
+		Subject: c.Subject,
+		ID:      c.ID,
+	}
+
+	if c.Audience != nil {
+		rawAudience, err := c.Audience.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawRegClaims.Audience = rawAudience
+	}
+
+	if c.ExpiresAt != nil {
+		rawExpireAt, err := c.ExpiresAt.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawRegClaims.ExpiresAt = rawExpireAt
+	}
+
+	if c.NotBefore != nil {
+		rawNotBefore, err := c.NotBefore.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawRegClaims.NotBefore = rawNotBefore
+	}
+
+	if c.IssuedAt != nil {
+		rawIssuedAt, err := c.IssuedAt.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawRegClaims.IssuedAt = rawIssuedAt
+	}
+
+	return json.Marshal(rawRegClaims)
+}
+
+func (c *RegisteredClaims) UnmarshalJSON(b []byte) (err error) {
+	raw := &rawRegisteredClaims{}
+
+	json.Unmarshal(b, raw)
+
+	regClaims := RegisteredClaims{
+		Issuer:  raw.Issuer,
+		Subject: raw.Subject,
+		ID:      raw.ID,
+	}
+
+	if len(raw.Audience) > 0 {
+		regClaims.Audience = ClaimStrings{}
+		err = regClaims.Audience.UnmarshalJSON(raw.Audience)
+		if err != nil {
+			return err
+		}
+	}
+	if len(raw.ExpiresAt) > 0 {
+		regClaims.ExpiresAt = &NumericDate{}
+		err = regClaims.ExpiresAt.UnmarshalJSON(raw.ExpiresAt)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(raw.NotBefore) > 0 {
+		regClaims.NotBefore = &NumericDate{}
+		err = regClaims.NotBefore.UnmarshalJSON(raw.NotBefore)
+		if err != nil {
+			return err
+		}
+	}
+	if len(raw.IssuedAt) > 0 {
+		regClaims.IssuedAt = &NumericDate{}
+		err = regClaims.IssuedAt.UnmarshalJSON(raw.IssuedAt)
+		if err != nil {
+			return err
+		}
+	}
+
+	*c = regClaims
+
+	return nil
 }
 
 // Valid validates time based claims "exp, iat, nbf".

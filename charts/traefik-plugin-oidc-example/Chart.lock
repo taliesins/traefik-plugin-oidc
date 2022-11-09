@@ -4,9 +4,9 @@ dependencies:
   version: 17.0.5
 - name: keycloak
   repository: https://charts.bitnami.com/bitnami
-  version: 10.1.6
+  version: 11.0.0
 - name: whoami
   repository: https://cowboysysop.github.io/charts/
   version: 2.7.0
-digest: sha256:738259c1b1c307dc094fcbb6130f8485a19d762b540c5e5d7febacf18bb20fe7
-generated: "2022-10-24T13:00:23.4462489+01:00"
+digest: sha256:40f9cfe7a2d3c4304863682fcbc32dea47ca5f8785ca73632e83809c19f2699e
+generated: "2022-10-27T15:56:30.8013301+01:00"

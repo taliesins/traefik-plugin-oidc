@@ -5,14 +5,14 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	"gopkg.in/square/go-jose.v2"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
+
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
 )
 
 var lruCache *lru.Cache
@@ -116,7 +116,7 @@ func GetPublicKeyFromIssuerUri(kid string, issuerUri string) (interface{}, x509.
 	return GetPublicKeyFromOpenIdConnectDiscoveryUri(kid, openIdConnectDiscoveryUri.String())
 }
 
-func DownloadJwksUri(jwksUri string) (*jose.JSONWebKeySet, error) {
+func DownloadJwksUri(jwksUri string) (*jwt_certificate.JSONWebKeySet, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -135,8 +135,8 @@ func DownloadJwksUri(jwksUri string) (*jose.JSONWebKeySet, error) {
 		return nil, err
 	}
 
-	jwks := &jose.JSONWebKeySet{}
-	err = json.Unmarshal(body, jwks)
+	jwks := &jwt_certificate.JSONWebKeySet{}
+	err = jwks.UnmarshalJSON(body)
 	if err != nil {
 		return nil, err
 	}
@@ -145,6 +145,7 @@ func DownloadJwksUri(jwksUri string) (*jose.JSONWebKeySet, error) {
 }
 
 func GetPublicKeyFromJwksUri(kid string, jwksUri string) (interface{}, x509.SignatureAlgorithm, error) {
+
 	cacheKey := fmt.Sprintf("%s|%s", jwksUri, kid)
 
 	// Try to get and return existing entry from cache. If cache is expired,
@@ -213,7 +214,7 @@ func GetPrivateKeyFromFileOrContent(certificateFileOrContents string) (interface
 	return privateKey, x509.UnknownSignatureAlgorithm, nil
 }
 
-func GetPublicKeyFromJwks(jwks *jose.JSONWebKeySet, kid string) (interface{}, x509.SignatureAlgorithm, error) {
+func GetPublicKeyFromJwks(jwks *jwt_certificate.JSONWebKeySet, kid string) (interface{}, x509.SignatureAlgorithm, error) {
 	for _, key := range jwks.Keys {
 		if key.KeyID == kid {
 			if !key.Valid() {
@@ -227,7 +228,7 @@ func GetPublicKeyFromJwks(jwks *jose.JSONWebKeySet, kid string) (interface{}, x5
 		}
 	}
 
-	jwksJson, _ := json.Marshal(jwks)
+	jwksJson, _ := jwks.MarshalJSON()
 	return nil, x509.UnknownSignatureAlgorithm, fmt.Errorf("JsonWebKeySet does not contain key: kid=%s jwks=%s", kid, jwksJson)
 }
 

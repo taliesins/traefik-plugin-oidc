@@ -9,6 +9,7 @@ import (
 
 func GetCertificateFromPath(publicKeyRootPath string, privateKeyRootPath string) (*jwt_certificate.Certificate, error) {
 	currentDirectory, err := GetProjectRootPath()
+
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +55,7 @@ func GetPrivateKeyFromPath(publicKeyRootPath string, privateKeyRootPath string) 
 		return nil, err
 	}
 
+	fmt.Printf("got privateKey \n")
 	return privateKey, nil
 }
 

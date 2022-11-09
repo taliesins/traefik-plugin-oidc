@@ -2,18 +2,17 @@ package integration
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
-	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
-	"github.com/taliesins/traefik-plugin-oidc/test_utils"
-	"gopkg.in/square/go-jose.v2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+
+	traefikPluginOidc "github.com/taliesins/traefik-plugin-oidc"
+	"github.com/taliesins/traefik-plugin-oidc/jwt_certificate"
+	"github.com/taliesins/traefik-plugin-oidc/test_utils"
 )
 
-func getJsonWebset(certificate *jwt_certificate.Certificate) (*jose.JSONWebKeySet, error) {
+func getJsonWebKeySet(certificate *jwt_certificate.Certificate) (*jwt_certificate.JSONWebKeySet, error) {
 	publicKeyData, err := certificate.CertFile.Read()
 	if err != nil {
 		return nil, err
@@ -29,8 +28,8 @@ func getJsonWebset(certificate *jwt_certificate.Certificate) (*jose.JSONWebKeySe
 		return nil, err
 	}
 
-	jsonWebKeySet := &jose.JSONWebKeySet{
-		Keys: []jose.JSONWebKey{
+	jsonWebKeySet := &jwt_certificate.JSONWebKeySet{
+		Keys: []jwt_certificate.JSONWebKey{
 			{
 				Key:       publicKey,
 				KeyID:     "0",
@@ -57,12 +56,12 @@ func BuildTestJwkServer(publicKeyRootPath string, privateKeyRootPath string, oid
 		return nil, nil, err
 	}
 
-	jsonWebKeySet, err := getJsonWebset(certificate)
+	jsonWebKeySet, err := getJsonWebKeySet(certificate)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	jsonWebKeySetJson, err := json.Marshal(jsonWebKeySet)
+	jsonWebKeySetJson, err := jsonWebKeySet.MarshalJSON()
 	if err != nil {
 		return nil, nil, err
 	}

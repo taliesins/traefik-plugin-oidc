@@ -9,9 +9,6 @@ The implementation handles some nuances around JWTs and supports:
 - validation of custom claims
 - clock skew allowances
 
-When this package is used, tokens are returned as `JSONWebToken` from the
-gopkg.in/square/go-jose.v2/jwt package.
-
 Note that while the jose package does support multi-recipient JWTs, this
 package does not support them.
 */
