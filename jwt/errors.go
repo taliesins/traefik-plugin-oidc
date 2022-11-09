@@ -14,6 +14,7 @@ var (
 	ErrTokenUnverifiable     = errors.New("token is unverifiable")
 	ErrTokenSignatureInvalid = errors.New("token signature is invalid")
 
+	ErrTokenInvalidSubject   = errors.New("token has invalid subject")
 	ErrTokenInvalidAudience  = errors.New("token has invalid audience")
 	ErrTokenExpired          = errors.New("token is expired")
 	ErrTokenUsedBeforeIssued = errors.New("token used before issued")

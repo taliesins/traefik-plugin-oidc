@@ -67,7 +67,9 @@ type Logger struct {
 // more convenient.
 //
 // For sample code, see the package-level AdvancedConfiguration example.
-func New(core encoder.Core, options ...Option) *Logger {
+func New(core encoder.Core, options []Option) *Logger {
+	//TODO: yeagi forces us to pass in "opts []Option" instead of "opts ...Option"
+
 	if core == nil {
 		return NewNop()
 	}
@@ -77,7 +79,7 @@ func New(core encoder.Core, options ...Option) *Logger {
 		addStack:    level.FatalLevel + 1,
 		clock:       clock.DefaultClock,
 	}
-	return log.WithOptions(options...)
+	return log.WithOptions(options)
 }
 
 // NewNop returns a no-op Logger. It never writes out logs or internal errors,
@@ -124,7 +126,8 @@ func (log *Logger) Named(s string) *Logger {
 
 // WithOptions clones the current Logger, applies the supplied Options, and
 // returns the resulting Logger. It's safe to use concurrently.
-func (log *Logger) WithOptions(opts ...Option) *Logger {
+func (log *Logger) WithOptions(opts []Option) *Logger {
+	//TODO: yeagi forces us to pass in "opts []Option" instead of "opts ...Option"
 	c := log.clone()
 	for _, opt := range opts {
 		opt.apply(c)
@@ -134,7 +137,8 @@ func (log *Logger) WithOptions(opts ...Option) *Logger {
 
 // With creates a child logger and adds structured context to it. Fields added
 // to the child don't affect the parent, and vice versa.
-func (log *Logger) With(fields ...encoder.Field) *Logger {
+func (log *Logger) With(fields []encoder.Field) *Logger {
+	//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
 	if len(fields) == 0 {
 		return log
 	}
@@ -159,41 +163,46 @@ func (log *Logger) Check(lvl level.Level, msg string) *encoder.CheckedEntry {
 
 // Log logs a message at the specified level. The message includes any fields
 // passed at the log site, as well as any fields accumulated on the logger.
-func (log *Logger) Log(lvl level.Level, msg string, fields ...encoder.Field) {
+func (log *Logger) Log(lvl level.Level, msg string, fields []encoder.Field) {
+	//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
 	if ce := log.check(lvl, msg); ce != nil {
-		ce.Write(fields...)
+		ce.Write(fields)
 	}
 }
 
 // Debug logs a message at DebugLevel. The message includes any fields passed
 // at the log site, as well as any fields accumulated on the logger.
-func (log *Logger) Debug(msg string, fields ...encoder.Field) {
+func (log *Logger) Debug(msg string, fields []encoder.Field) {
+	//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
 	if ce := log.check(level.DebugLevel, msg); ce != nil {
-		ce.Write(fields...)
+		ce.Write(fields)
 	}
 }
 
 // Info logs a message at InfoLevel. The message includes any fields passed
 // at the log site, as well as any fields accumulated on the logger.
-func (log *Logger) Info(msg string, fields ...encoder.Field) {
+func (log *Logger) Info(msg string, fields []encoder.Field) {
+	//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
 	if ce := log.check(level.InfoLevel, msg); ce != nil {
-		ce.Write(fields...)
+		ce.Write(fields)
 	}
 }
 
 // Warn logs a message at WarnLevel. The message includes any fields passed
 // at the log site, as well as any fields accumulated on the logger.
-func (log *Logger) Warn(msg string, fields ...encoder.Field) {
+func (log *Logger) Warn(msg string, fields []encoder.Field) {
+	//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
 	if ce := log.check(level.WarnLevel, msg); ce != nil {
-		ce.Write(fields...)
+		ce.Write(fields)
 	}
 }
 
 // Error logs a message at ErrorLevel. The message includes any fields passed
 // at the log site, as well as any fields accumulated on the logger.
-func (log *Logger) Error(msg string, fields ...encoder.Field) {
+func (log *Logger) Error(msg string, fields []encoder.Field) {
+	//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
 	if ce := log.check(level.ErrorLevel, msg); ce != nil {
-		ce.Write(fields...)
+		ce.Write(fields)
 	}
 }
 
@@ -203,9 +212,10 @@ func (log *Logger) Error(msg string, fields ...encoder.Field) {
 // If the logger is in development mode, it then panics (DPanic means
 // "development panic"). This is useful for catching errors that are
 // recoverable, but shouldn't ever happen.
-func (log *Logger) DPanic(msg string, fields ...encoder.Field) {
+func (log *Logger) DPanic(msg string, fields []encoder.Field) {
+	//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
 	if ce := log.check(level.DPanicLevel, msg); ce != nil {
-		ce.Write(fields...)
+		ce.Write(fields)
 	}
 }
 
@@ -213,9 +223,10 @@ func (log *Logger) DPanic(msg string, fields ...encoder.Field) {
 // at the log site, as well as any fields accumulated on the logger.
 //
 // The logger then panics, even if logging at PanicLevel is disabled.
-func (log *Logger) Panic(msg string, fields ...encoder.Field) {
+func (log *Logger) Panic(msg string, fields []encoder.Field) {
+	//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
 	if ce := log.check(level.PanicLevel, msg); ce != nil {
-		ce.Write(fields...)
+		ce.Write(fields)
 	}
 }
 
@@ -224,9 +235,10 @@ func (log *Logger) Panic(msg string, fields ...encoder.Field) {
 //
 // The logger then calls os.Exit(1), even if logging at FatalLevel is
 // disabled.
-func (log *Logger) Fatal(msg string, fields ...encoder.Field) {
+func (log *Logger) Fatal(msg string, fields []encoder.Field) {
 	if ce := log.check(level.FatalLevel, msg); ce != nil {
-		ce.Write(fields...)
+		//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
+		ce.Write(fields)
 	}
 }
 

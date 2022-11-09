@@ -1,8 +1,9 @@
 package jwks
 
 import (
-	"github.com/taliesins/traefik-plugin-oidc/assert"
 	"testing"
+
+	"github.com/taliesins/traefik-plugin-oidc/assert"
 )
 
 func TestDownloadOpenIdConnectDiscoveryUriSuccess(t *testing.T) {
@@ -15,4 +16,5 @@ func TestDownloadJwksUriSuccess(t *testing.T) {
 	jwks, err := DownloadJwksUri("https://login.microsoftonline.com/775527ff-9a37-4307-8b3d-cc311f58d925/discovery/v2.0/keys")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, jwks, "jwks")
+	assert.True(t, len(jwks.Keys[0].KeyID) > 1, "jwks")
 }

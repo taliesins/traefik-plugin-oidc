@@ -175,11 +175,10 @@ func NoError(t Tester, e error) {
 // expected. it uses reflect.DeepEqual to do so.
 // name is used to describe the values being compared. it's used in the error
 // string if actual != expected.
-func Equal(t Tester, actual, expected interface{}, noun string) {
+func Equal(t Tester, expected, actual interface{}, noun string) {
 	if h, ok := t.(tHelper); ok {
 		h.Helper()
 	}
-
 	if !objectsAreEqual(expected, actual) {
 		diffValue := diff(expected, actual)
 		expected, actual = formatUnequalValues(expected, actual)

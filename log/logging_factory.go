@@ -35,7 +35,7 @@ func NewLogger() (logger *Logger, err error) {
 
 	core := encoder.NewCore(consoleEncoder, syncer.Lock(os.Stdout), levelToLog)
 
-	logger = New(core, AddCaller(), AddStacktrace(stackTraceAppendLevelToLog))
+	logger = New(core, []Option{AddCaller(), AddStacktrace(stackTraceAppendLevelToLog)})
 
 	return logger, nil
 }

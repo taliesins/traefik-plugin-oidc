@@ -6,7 +6,7 @@ metadata:
 spec:
   plugin:
     traefik-plugin-oidc:
-      SsoRedirectUrlAddressTemplate:     "http://http://keycloakhost:keycloakport/auth/realms/{realm}/.well-known/openid-configuration/traefik_k8s_test.onmicrosoft.com/oauth2/v2.0/authorize?p=B2C_1A_signup_signin&client_id=1234f2b2-9fe3-1234-11a6-f123e76e3843&nonce={{.Nonce}}&redirect_uri={{.CallbackUrl}}&state={{.State}}&scope=openid&response_type=id_token&prompt=login"
+      SsoRedirectUrlAddressTemplate: "{{`http://keycloak.localhost/realms/whoami/protocol/openid-connect/auth?client_id=whoami-middleware-oidc-keycloak&nonce={{.Nonce}}&redirect_uri={{.CallbackUrl}}&state={{.State}}&scope=openid&response_type=id_token`}}"
       SsoRedirectUrlMacStrength:         "256"
       SsoRedirectUrlMacClientSecret:     "password"
       SsoRedirectUrlMacPrivateKey:       ""
@@ -17,7 +17,7 @@ spec:
       Issuer:               ""
       Audience:             ""
       JwksAddress:          ""
-      OidcDiscoveryAddress: "http://keycloak.localhost/auth/realms/default/.well-known/openid-configuration"
+      OidcDiscoveryAddress: "http://example-keycloak/realms/whoami/.well-known/openid-configuration"
       UseDynamicValidation: false
 
       AlgorithmValidationRegex: ""

@@ -233,7 +233,8 @@ func (ce *CheckedEntry) reset() {
 // Write writes the entry to the stored Cores, returns any errors, and returns
 // the CheckedEntry reference to a pool for immediate re-use. Finally, it
 // executes any required CheckWriteAction.
-func (ce *CheckedEntry) Write(fields ...Field) {
+func (ce *CheckedEntry) Write(fields []Field) {
+	//TODO: yeagi forces us to pass in "fields []encoder.Field" instead of "fields ...encoder.Field"
 	if ce == nil {
 		return
 	}

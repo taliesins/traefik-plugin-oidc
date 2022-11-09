@@ -31,10 +31,7 @@ func ParseRSAPrivateKeyFromPEM(key []byte) (*rsa.PrivateKey, error) {
 	}
 
 	var pkey *rsa.PrivateKey
-	var ok bool
-	if pkey, ok = parsedKey.(*rsa.PrivateKey); !ok {
-		return nil, ErrNotRSAPrivateKey
-	}
+	pkey = parsedKey.(*rsa.PrivateKey)
 
 	return pkey, nil
 }
@@ -67,10 +64,7 @@ func ParseRSAPrivateKeyFromPEMWithPassword(key []byte, password string) (*rsa.Pr
 	}
 
 	var pkey *rsa.PrivateKey
-	var ok bool
-	if pkey, ok = parsedKey.(*rsa.PrivateKey); !ok {
-		return nil, ErrNotRSAPrivateKey
-	}
+	pkey = parsedKey.(*rsa.PrivateKey)
 
 	return pkey, nil
 }
@@ -96,10 +90,7 @@ func ParseRSAPublicKeyFromPEM(key []byte) (*rsa.PublicKey, error) {
 	}
 
 	var pkey *rsa.PublicKey
-	var ok bool
-	if pkey, ok = parsedKey.(*rsa.PublicKey); !ok {
-		return nil, ErrNotRSAPublicKey
-	}
+	pkey = parsedKey.(*rsa.PublicKey)
 
 	return pkey, nil
 }

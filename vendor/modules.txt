@@ -1,8 +1,3 @@
-# github.com/golang-jwt/jwt/v4 v4.4.2
-## explicit; go 1.16
-github.com/golang-jwt/jwt/v4
-# github.com/google/go-cmp v0.5.8
-## explicit; go 1.13
 # github.com/google/uuid v1.3.0
 ## explicit
 github.com/google/uuid
@@ -16,15 +11,3 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/stretchr/testify v1.8.0
-## explicit; go 1.13
-# golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be
-## explicit; go 1.17
-golang.org/x/crypto/ed25519
-golang.org/x/crypto/pbkdf2
-# gopkg.in/square/go-jose.v2 v2.6.0
-## explicit
-gopkg.in/square/go-jose.v2
-gopkg.in/square/go-jose.v2/cipher
-gopkg.in/square/go-jose.v2/json
-gopkg.in/square/go-jose.v2/jwt
